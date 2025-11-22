@@ -248,10 +248,13 @@ export default function TasksPanel() {
   };
 
   const getAssignmentLabel = (task: any) => {
-    if (task.assignedBy._id === currentUser.id) {
-      return 'Self-assigned';
+    const assignedToId = task.assignedTo._id?.toString() || task.assignedTo._id;
+    const assignedById = task.assignedBy._id?.toString() || task.assignedBy._id;
+    
+    if (assignedToId === assignedById) {
+      return 'Self';
     }
-    return `Assigned by ${task.assignedBy.name || task.assignedBy.email}`;
+    return task.assignedBy.name || task.assignedBy.email;
   };
 
   const groupedNotes = selectedTask ? groupNotesByDate(selectedTask.notes) : {};
@@ -392,7 +395,7 @@ export default function TasksPanel() {
                                   <p className="mt-1">{selectedTask.assignedTo.name || selectedTask.assignedTo.email}</p>
                                 </div>
                                 <div>
-                                  <label className="text-xs font-semibold text-gray-600">Assignment</label>
+                                  <label className="text-xs font-semibold text-gray-600">Assigned By</label>
                                   <p className="mt-1">{getAssignmentLabel(selectedTask)}</p>
                                 </div>
                               </div>
