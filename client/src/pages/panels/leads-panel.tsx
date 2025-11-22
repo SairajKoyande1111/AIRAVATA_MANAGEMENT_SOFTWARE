@@ -585,11 +585,11 @@ export default function LeadsPanel() {
         ) : (
           filteredLeads.map((lead) => (
             <Card key={lead._id} data-testid={`card-lead-${lead._id}`} className="overflow-hidden">
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-4 bg-gray-50">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CardTitle className="text-lg">{lead.clientId?.companyName}</CardTitle>
+                    <div className="flex items-center gap-2 mb-3">
+                      <CardTitle className="text-xl font-bold">{lead.clientId?.companyName}</CardTitle>
                       <Badge className={stageColors[lead.stage]} variant="secondary">
                         {lead.stage.charAt(0).toUpperCase() + lead.stage.slice(1)}
                       </Badge>
@@ -597,13 +597,24 @@ export default function LeadsPanel() {
                         {lead.priority.charAt(0).toUpperCase() + lead.priority.slice(1)}
                       </Badge>
                     </div>
-                    <CardDescription>
-                      <div className="text-sm">
-                        <p>Contact: {lead.clientId?.clientName}</p>
-                        <p>Services: {Array.isArray(lead.requirementType) ? lead.requirementType.join(', ') : lead.requirementType}</p>
-                        {lead.estimatedBudget && <p>Budget: ₹{lead.estimatedBudget?.toLocaleString()}</p>}
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs font-semibold text-gray-600 uppercase">Contact Person</p>
+                        <p className="text-sm font-medium text-gray-900">{lead.clientId?.clientName}</p>
                       </div>
-                    </CardDescription>
+                      
+                      <div>
+                        <p className="text-xs font-semibold text-gray-600 uppercase mb-1">Services Required</p>
+                        <div className="flex flex-wrap gap-2">
+                          {Array.isArray(lead.requirementType) && lead.requirementType.map((service) => (
+                            <Badge key={service} className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+                              {service}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
                     <Button
@@ -629,29 +640,43 @@ export default function LeadsPanel() {
                 </div>
               </CardHeader>
 
-              <CardContent className="pb-3">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <CardContent className="pt-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4 pb-4 border-b">
                   <div>
-                    <div className="text-gray-600">Assigned To</div>
-                    <p className="text-gray-900 mt-1 font-medium">{Array.isArray(lead.assignedTo) ? lead.assignedTo.join(', ') : lead.assignedTo}</p>
+                    <div className="text-xs font-semibold text-gray-600 uppercase">Assigned To</div>
+                    <p className="text-sm font-medium text-gray-900 mt-1">{Array.isArray(lead.assignedTo) ? lead.assignedTo.join(', ') : lead.assignedTo}</p>
                   </div>
                   <div>
-                    <div className="text-gray-600">Lead Date</div>
-                    <p className="text-gray-900 mt-1">{new Date(lead.registeredDate).toLocaleDateString()}</p>
+                    <div className="text-xs font-semibold text-gray-600 uppercase">Lead Date</div>
+                    <p className="text-sm text-gray-900 mt-1">{new Date(lead.registeredDate).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <div className="text-gray-600">Email</div>
-                    <p className="text-gray-900 mt-1 truncate">{lead.clientId?.email}</p>
+                    <div className="text-xs font-semibold text-gray-600 uppercase">Email</div>
+                    <p className="text-sm text-gray-900 mt-1 truncate">{lead.clientId?.email}</p>
                   </div>
                   <div>
-                    <div className="text-gray-600">Phone</div>
-                    <p className="text-gray-900 mt-1">{lead.clientId?.phone}</p>
+                    <div className="text-xs font-semibold text-gray-600 uppercase">Phone</div>
+                    <p className="text-sm text-gray-900 mt-1">{lead.clientId?.phone}</p>
                   </div>
                 </div>
 
+                {lead.serviceBudgets && Object.keys(lead.serviceBudgets).length > 0 && (
+                  <div className="mb-4 pb-4 border-b">
+                    <div className="text-xs font-semibold text-gray-600 uppercase mb-2">Budget per Service</div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {Object.entries(lead.serviceBudgets).map(([service, budget]) => (
+                        <div key={service}>
+                          <p className="text-xs text-gray-600">{service}</p>
+                          <p className="text-sm font-semibold text-gray-900">₹{(budget as number).toLocaleString()}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {lead.requirementDetails && lead.requirementDetails.length > 0 && (
-                  <div className="mt-4">
-                    <div className="text-sm font-semibold text-gray-700 mb-2">Requirements:</div>
+                  <div className="mb-4 pb-4 border-b">
+                    <div className="text-xs font-semibold text-gray-600 uppercase mb-2">Requirements</div>
                     <div className="flex flex-wrap gap-2">
                       {lead.requirementDetails.map((req, idx) => (
                         <Badge key={idx} variant="outline" className="text-xs">
@@ -663,14 +688,14 @@ export default function LeadsPanel() {
                 )}
 
                 {lead.notes && (
-                  <div className="mt-4 p-3 bg-gray-50 rounded">
-                    <div className="text-sm font-semibold text-gray-700 mb-1">Notes:</div>
-                    <p className="text-sm text-gray-600">{lead.notes}</p>
+                  <div className="mb-4 pb-4 border-b">
+                    <div className="text-xs font-semibold text-gray-600 uppercase mb-2">Notes</div>
+                    <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">{lead.notes}</p>
                   </div>
                 )}
 
                 {lead.nextFollowUp && (
-                  <div className="mt-4 flex items-center gap-2 text-sm text-blue-600">
+                  <div className="flex items-center gap-2 text-sm text-blue-600">
                     <Calendar className="w-4 h-4" />
                     Follow-up: {new Date(lead.nextFollowUp).toLocaleDateString()}
                   </div>
