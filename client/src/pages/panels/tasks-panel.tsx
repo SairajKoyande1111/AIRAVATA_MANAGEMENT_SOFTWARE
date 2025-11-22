@@ -548,20 +548,26 @@ export default function TasksPanel() {
           className="flex-1"
           data-testid="input-search-tasks"
         />
-        <div className="flex items-center gap-2 border rounded-md px-3 py-2">
-          <Calendar className="w-4 h-4 text-gray-600" />
-          <Input
-            type="date"
-            value={searchDate}
-            onChange={(e) => {
-              const date = new Date(e.target.value);
-              const formatted = date.toLocaleDateString('en-IN', { year: 'numeric', month: '2-digit', day: '2-digit' });
-              setSearchDate(formatted);
-            }}
-            className="border-0 p-0 w-32"
-            data-testid="input-search-date"
-          />
-        </div>
+        <input
+          type="date"
+          value={searchDate}
+          onChange={(e) => {
+            const date = new Date(e.target.value);
+            const formatted = date.toLocaleDateString('en-IN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            setSearchDate(formatted);
+          }}
+          className="hidden"
+          id="task-date-filter"
+          data-testid="input-search-date"
+        />
+        <label
+          htmlFor="task-date-filter"
+          className="cursor-pointer p-2 rounded hover:bg-gray-100 transition-colors"
+          title={searchDate ? `Filtering by ${searchDate}` : 'Click to filter by date'}
+          data-testid="button-date-filter-tasks"
+        >
+          <Calendar className={`w-5 h-5 ${searchDate ? 'text-blue-600' : 'text-gray-600'}`} />
+        </label>
       </div>
 
       <Tabs defaultValue="active" className="w-full">
