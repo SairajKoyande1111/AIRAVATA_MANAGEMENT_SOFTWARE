@@ -8,7 +8,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Clock, Coffee, LogOut as ClockOut, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function AttendancePanel() {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  // Initialize with today's date in IST
+  const getTodayIST = () => {
+    const now = new Date();
+    const istDate = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    return istDate.toISOString().split('T')[0];
+  };
+
+  const [selectedDate, setSelectedDate] = useState(getTodayIST());
   const [allAttendance, setAllAttendance] = useState<any[]>([]);
   const [myAttendance, setMyAttendance] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -16,13 +23,6 @@ export default function AttendancePanel() {
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
-    // Initialize with today's date in IST
-    const now = new Date();
-    const istDate = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-    const todayIST = istDate.toISOString().split('T')[0];
-    if (selectedDate !== todayIST) {
-      setSelectedDate(todayIST);
-    }
     fetchAllAttendance();
     const interval = setInterval(fetchAllAttendance, 10000);
     return () => clearInterval(interval);
