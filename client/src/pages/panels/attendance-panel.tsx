@@ -16,6 +16,13 @@ export default function AttendancePanel() {
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
+    // Initialize with today's date in IST
+    const now = new Date();
+    const istDate = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    const todayIST = istDate.toISOString().split('T')[0];
+    if (selectedDate !== todayIST) {
+      setSelectedDate(todayIST);
+    }
     fetchAllAttendance();
     const interval = setInterval(fetchAllAttendance, 10000);
     return () => clearInterval(interval);
@@ -75,14 +82,21 @@ export default function AttendancePanel() {
   };
 
   const handleDateChange = (days: number) => {
-    const date = new Date(selectedDate);
+    const date = new Date(selectedDate + 'T00:00:00');
     date.setDate(date.getDate() + days);
     setSelectedDate(date.toISOString().split('T')[0]);
   };
 
   const formatTime = (date: string | null) => {
     if (!date) return '-';
-    return new Date(date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const d = new Date(date);
+    return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+  };
+
+  const getIndianDate = (dateStr: string) => {
+    const d = new Date(dateStr + 'T00:00:00Z');
+    const istDate = new Date(d.getTime() + (5.5 * 60 * 60 * 1000));
+    return istDate.toISOString().split('T')[0];
   };
 
   const calculateWorkTime = (attendance: any) => {
@@ -109,9 +123,15 @@ export default function AttendancePanel() {
     return { label: 'Not Started', variant: 'outline' as const };
   };
 
-  const isToday = selectedDate === new Date().toISOString().split('T')[0];
-  const dateObj = new Date(selectedDate);
-  const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+  const now = new Date();
+  const istDate = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+  const todayIST = istDate.toISOString().split('T')[0];
+  const isToday = selectedDate === todayIST;
+  
+  const dateObj = new Date(selectedDate + 'T00:00:00Z');
+  const istDateTime = new Date(dateObj.getTime() + (5.5 * 60 * 60 * 1000));
+  const dayName = istDateTime.toLocaleDateString('en-IN', { weekday: 'long' });
+  const formattedDate = istDateTime.toLocaleDateString('en-IN');
 
   return (
     <div className="p-8 space-y-6">
@@ -253,7 +273,7 @@ export default function AttendancePanel() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Team Attendance - {dayName}, {dateObj.toLocaleDateString()}</CardTitle>
+          <CardTitle>Team Attendance - {dayName}, {formattedDate}</CardTitle>
           <CardDescription>View everyone's attendance records</CardDescription>
         </CardHeader>
         <CardContent>
