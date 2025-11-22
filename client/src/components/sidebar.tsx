@@ -1,7 +1,7 @@
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Calendar, Users, Target, MessageSquare, BarChart3, CheckSquare, LogOut } from 'lucide-react';
+import { Calendar, Users, Target, MessageSquare, BarChart3, CheckSquare, Archive, LogOut } from 'lucide-react';
 
 interface SidebarProps {
   activeSection: string;
@@ -15,6 +15,7 @@ export default function Sidebar({ activeSection, onSectionChange, onLogout }: Si
   const sections = [
     { id: 'attendance', label: 'Attendance', icon: Calendar, color: 'text-blue-600' },
     { id: 'tasks', label: 'Tasks', icon: CheckSquare, color: 'text-indigo-600' },
+    { id: 'history', label: 'Tasks History', icon: Archive, color: 'text-gray-600' },
     { id: 'clients', label: 'Clients', icon: Users, color: 'text-green-600' },
     { id: 'leads', label: 'Leads', icon: Target, color: 'text-purple-600' },
     { id: 'followups', label: 'Follow-ups', icon: MessageSquare, color: 'text-orange-600' },

@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import Sidebar from '@/components/sidebar';
 import AttendancePanel from './panels/attendance-panel';
 import TasksPanel from './panels/tasks-panel';
+import HistoryPanel from './panels/history-panel';
 import ClientsPanel from './panels/clients-panel';
 import LeadsPanel from './panels/leads-panel';
 import FollowupsPanel from './panels/followups-panel';
@@ -31,6 +32,8 @@ export default function CRMDashboard() {
         return <AttendancePanel />;
       case 'tasks':
         return <TasksPanel />;
+      case 'history':
+        return <HistoryPanel />;
       case 'clients':
         return <ClientsPanel />;
       case 'leads':

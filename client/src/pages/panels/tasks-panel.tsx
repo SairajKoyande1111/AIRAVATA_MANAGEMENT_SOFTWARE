@@ -626,6 +626,30 @@ export default function TasksPanel() {
     );
   };
 
+  const handleArchiveTasks = async () => {
+    const token = localStorage.getItem('token');
+    const confirmed = window.confirm('Archive all tasks for today and clear the task section? This will move all tasks to history organized by date.');
+    
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch('/api/tasks/archive/daily', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error('Archive failed');
+      
+      const data = await response.json();
+      toast({ description: `${data.archivedCount} tasks archived successfully` });
+      fetchTasks();
+      setSearchTerm('');
+      setSearchDate('');
+    } catch (error) {
+      toast({ description: 'Failed to archive tasks', variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="p-8 space-y-6">
       <div className="flex justify-between items-center">
@@ -633,7 +657,16 @@ export default function TasksPanel() {
           <h1 className="text-3xl font-bold">Tasks</h1>
           <p className="text-gray-600">Manage team tasks and track daily progress</p>
         </div>
-        <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={handleArchiveTasks}
+            data-testid="button-archive-tasks"
+            className="bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-300"
+          >
+            📦 Archive Daily Tasks
+          </Button>
+          <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
           <DialogTrigger asChild>
             <Button data-testid="button-create-task">
               <Plus className="w-4 h-4 mr-2" />
@@ -689,6 +722,7 @@ export default function TasksPanel() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="flex gap-4 items-center">

@@ -8,6 +8,7 @@ import * as leadController from "./controllers/leadController";
 import * as followUpController from "./controllers/followUpController";
 import * as reportController from "./controllers/reportController";
 import * as taskController from "./controllers/taskController";
+import * as taskArchiveController from "./controllers/taskArchiveController";
 import * as userController from "./controllers/userController";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -51,6 +52,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/tasks/:taskId/notes", authenticateToken, taskController.addNote);
   app.delete("/api/tasks/:taskId", authenticateToken, taskController.deleteTask);
   app.post("/api/tasks/:taskId/approve", authenticateToken, taskController.approveTask);
+  app.post("/api/tasks/archive/daily", authenticateToken, taskArchiveController.archiveDailyTasks);
+  app.get("/api/tasks/archive/all", authenticateToken, taskArchiveController.getAllArchives);
+  app.get("/api/tasks/archive/by-date", authenticateToken, taskArchiveController.getArchiveByDate);
 
   // User routes (protected)
   app.get("/api/users", authenticateToken, userController.getUsers);
