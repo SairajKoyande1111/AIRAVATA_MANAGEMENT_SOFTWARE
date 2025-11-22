@@ -285,7 +285,7 @@ export default function TasksPanel() {
   };
 
   const getAssignmentLabel = (task: any) => {
-    if (currentUser.id === task.assignedBy._id) {
+    if (currentUser._id === task.assignedBy._id) {
       return 'Self';
     }
     return task.assignedBy?.name || task.assignedBy?.email;
