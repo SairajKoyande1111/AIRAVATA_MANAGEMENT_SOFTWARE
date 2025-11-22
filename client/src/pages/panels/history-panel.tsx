@@ -46,6 +46,45 @@ export default function HistoryPanel() {
     fetchArchives();
   }, []);
 
+  // Auto-expand matching dates when searching or filtering
+  useEffect(() => {
+    if (searchText.trim() || selectedDate) {
+      // Get filtered results and auto-expand them
+      const lowerSearch = searchText.toLowerCase();
+      const newExpanded = new Set<string>();
+      
+      Object.entries(archives).forEach(([date, tasks]) => {
+        let hasMatch = false;
+        
+        // Check if any task matches search/date filter
+        const matchingTasks = tasks.filter(task =>
+          task.title.toLowerCase().includes(lowerSearch) ||
+          task.description.toLowerCase().includes(lowerSearch) ||
+          (task.assignedTo?.name || task.assignedTo?.email || '').toLowerCase().includes(lowerSearch)
+        );
+        
+        if (selectedDate) {
+          const dateString = new Date(selectedDate).toLocaleDateString('en-IN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          });
+          if (date === dateString && matchingTasks.length > 0) {
+            hasMatch = true;
+          }
+        } else if (matchingTasks.length > 0) {
+          hasMatch = true;
+        }
+        
+        if (hasMatch) {
+          newExpanded.add(date);
+        }
+      });
+      
+      setExpandedDates(newExpanded);
+    }
+  }, [searchText, selectedDate, archives]);
+
   const toggleDateExpand = (date: string) => {
     const newExpanded = new Set(expandedDates);
     if (newExpanded.has(date)) {
