@@ -46,8 +46,6 @@ export default function RegisterClientPanel({ isEditing: propsIsEditing = false,
     projectTimeline: '',
     decisionMaker: '',
     urgencyLevel: 'Medium',
-    nextFollowUpDate: '',
-    nextAction: '',
   });
   const [currentProblem, setCurrentProblem] = useState('');
   const [currentRequirement, setCurrentRequirement] = useState('');
