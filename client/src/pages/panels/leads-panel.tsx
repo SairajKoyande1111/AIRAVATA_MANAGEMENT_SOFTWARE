@@ -30,7 +30,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, TrendingUp, Calendar } from 'lucide-react';
+import { Plus, Edit, Trash2, TrendingUp, Calendar, Eye, EyeOff } from 'lucide-react';
 
 const fixedUsers = ['Aniket', 'Sairaj', 'Sejal', 'Pratik', 'Abhijeet'];
 const stages = ['new', 'contacted', 'qualified', 'proposal', 'meeting', 'negotiation', 'won', 'lost'];
@@ -69,6 +69,7 @@ export default function LeadsPanel() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
+  const [expandedLeads, setExpandedLeads] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -583,7 +584,19 @@ export default function LeadsPanel() {
             </CardContent>
           </Card>
         ) : (
-          filteredLeads.map((lead) => (
+          filteredLeads.map((lead) => {
+            const isExpanded = expandedLeads.has(lead._id);
+            const toggleExpand = () => {
+              const newExpanded = new Set(expandedLeads);
+              if (newExpanded.has(lead._id)) {
+                newExpanded.delete(lead._id);
+              } else {
+                newExpanded.add(lead._id);
+              }
+              setExpandedLeads(newExpanded);
+            };
+
+            return (
             <Card key={lead._id} data-testid={`card-lead-${lead._id}`} className="overflow-hidden">
               <CardHeader className="pb-4 bg-gray-50">
                 <div className="flex items-start justify-between gap-4">
@@ -620,6 +633,15 @@ export default function LeadsPanel() {
                     <Button
                       size="sm"
                       variant="outline"
+                      onClick={toggleExpand}
+                      data-testid={`button-view-lead-${lead._id}`}
+                      title={isExpanded ? 'Hide details' : 'Show details'}
+                    >
+                      {isExpanded ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => {
                         setEditingLead(lead);
                         setEditDialogOpen(true);
@@ -640,6 +662,7 @@ export default function LeadsPanel() {
                 </div>
               </CardHeader>
 
+              {isExpanded && (
               <CardContent className="pt-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4 pb-4 border-b">
                   <div>
@@ -701,8 +724,10 @@ export default function LeadsPanel() {
                   </div>
                 )}
               </CardContent>
+              )}
             </Card>
-          ))
+            );
+          })
         )}
       </div>
 
