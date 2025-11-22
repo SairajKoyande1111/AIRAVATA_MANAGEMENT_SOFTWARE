@@ -314,8 +314,8 @@ export default function TasksPanel() {
   const dateKeys = Object.keys(groupedNotes).sort().reverse();
 
   const TaskTable = ({ taskList }: { taskList: any[] }) => {
-    const groupedByUser = taskList.reduce((acc, task) => {
-      const existing = acc.find(g => g.userId === task.assignedTo._id);
+    const groupedByUser = taskList.reduce((acc: any[], task: any) => {
+      const existing = acc.find((g: any) => g.userId === task.assignedTo._id);
       if (existing) {
         existing.tasks.push(task);
       } else {
@@ -350,7 +350,7 @@ export default function TasksPanel() {
               </TableCell>
             </TableRow>
           ) : (
-            groupedByUser.flatMap((group) => {
+            groupedByUser.flatMap((group: any) => {
               const isExpanded = expandedUsers.has(group.userId);
               const rows: any[] = [
                 <TableRow key={`group-${group.userId}`} className="bg-blue-50 hover:bg-blue-100">
@@ -385,7 +385,7 @@ export default function TasksPanel() {
               ];
 
               if (isExpanded || group.tasks.length === 1) {
-                group.tasks.forEach((task) => {
+                group.tasks.forEach((task: any) => {
                   rows.push(
                     <TableRow key={task._id} data-testid={`row-task-${task._id}`} className="hover:bg-gray-50">
                       <TableCell></TableCell>
@@ -481,9 +481,11 @@ export default function TasksPanel() {
             📦 Archive Daily Tasks
           </Button>
           <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
-            <Button data-testid="button-create-task">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Task
+            <Button asChild data-testid="button-create-task">
+              <span>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Task
+              </span>
             </Button>
             <DialogContent>
               <DialogHeader>
