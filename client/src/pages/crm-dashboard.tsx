@@ -13,6 +13,7 @@ import ReportsPanel from './panels/reports-panel';
 export default function CRMDashboard() {
   const [, setLocation] = useLocation();
   const [activeSection, setActiveSection] = useState('attendance');
+  const [editingClientId, setEditingClientId] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -36,7 +37,7 @@ export default function CRMDashboard() {
       case 'history':
         return <HistoryPanel />;
       case 'register-client':
-        return <RegisterClientPanel />;
+        return <RegisterClientPanel editingClientId={editingClientId} onSave={() => setEditingClientId(null)} />;
       case 'clients':
         return <ClientsPanel />;
       case 'leads':
