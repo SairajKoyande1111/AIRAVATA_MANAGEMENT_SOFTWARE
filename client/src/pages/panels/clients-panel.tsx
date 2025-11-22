@@ -207,14 +207,14 @@ export default function ClientsPanel({ onNavigate, onEditMode }: ClientsPanelPro
               <CardHeader className="pb-4 bg-gray-50">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-3">
-                      <CardTitle className="text-xl font-bold">{client.companyName}</CardTitle>
+                    <div className="mb-4">
+                      <img src="/company-logo.png" alt="Company Logo" className="h-16 object-contain" data-testid="logo-company" />
                     </div>
                     
                     <div className="space-y-3">
                       <div>
-                        <p className="text-xs font-semibold text-gray-600 uppercase">Contact Person</p>
-                        <p className="text-sm font-medium text-gray-900">{client.clientName} {client.designation && `- ${client.designation}`}</p>
+                        <p className="text-lg font-bold text-gray-900">{client.clientName}</p>
+                        {client.designation && <p className="text-sm text-gray-600">{client.designation}</p>}
                       </div>
 
                       {client.services && client.services.length > 0 && (
