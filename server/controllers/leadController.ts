@@ -55,8 +55,7 @@ export const createLead = async (req: AuthRequest, res: Response) => {
 export const getLeads = async (req: AuthRequest, res: Response) => {
   try {
     const leads = await Lead.find()
-      .populate('clientId', 'name email phone businessType')
-      .populate('assignedTo', 'name email')
+      .populate('clientId', 'companyName clientName email phone')
       .sort({ createdAt: -1 });
 
     res.json({ leads });
@@ -71,8 +70,7 @@ export const getLeadById = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const lead = await Lead.findById(id)
-      .populate('clientId', 'name email phone businessType')
-      .populate('assignedTo', 'name email');
+      .populate('clientId', 'companyName clientName email phone');
 
     if (!lead) {
       return res.status(404).json({ error: 'Lead not found' });
@@ -95,8 +93,7 @@ export const updateLead = async (req: AuthRequest, res: Response) => {
       updateData,
       { new: true, runValidators: true }
     )
-      .populate('clientId', 'name email phone businessType')
-      .populate('assignedTo', 'name email');
+      .populate('clientId', 'companyName clientName email phone');
 
     if (!lead) {
       return res.status(404).json({ error: 'Lead not found' });
