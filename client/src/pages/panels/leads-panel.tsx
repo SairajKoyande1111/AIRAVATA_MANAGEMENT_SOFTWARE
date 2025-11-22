@@ -53,6 +53,7 @@ interface Lead {
   requirementDetails: string[];
   priority: string;
   stage: string;
+  serviceBudgets?: { [key: string]: number };
   estimatedBudget?: number;
   nextFollowUp?: string;
   notes?: string;
@@ -80,7 +81,7 @@ export default function LeadsPanel() {
     requirementDetails: [] as string[],
     priority: 'medium',
     stage: 'new',
-    estimatedBudget: '',
+    serviceBudgets: {} as { [key: string]: string },
     nextFollowUp: '',
     notes: '',
   });
@@ -440,18 +441,37 @@ export default function LeadsPanel() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {formData.requirementType.length > 0 && (
                 <div>
-                  <Label htmlFor="estimatedBudget">Estimated Budget (₹)</Label>
-                  <Input
-                    id="estimatedBudget"
-                    type="number"
-                    value={formData.estimatedBudget}
-                    onChange={(e) => setFormData({ ...formData, estimatedBudget: e.target.value })}
-                    placeholder="0"
-                    data-testid="input-budget"
-                  />
+                  <Label>Budget per Service (₹)</Label>
+                  <div className="space-y-3">
+                    {formData.requirementType.map((service) => (
+                      <div key={service} className="flex items-end gap-2">
+                        <div className="flex-1">
+                          <Label htmlFor={`budget-${service}`} className="text-sm text-gray-600">
+                            {service}
+                          </Label>
+                          <Input
+                            id={`budget-${service}`}
+                            type="number"
+                            value={formData.serviceBudgets[service] || ''}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                serviceBudgets: { ...formData.serviceBudgets, [service]: e.target.value },
+                              })
+                            }
+                            placeholder="0"
+                            data-testid={`input-budget-${service}`}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              )}
+
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <Label htmlFor="nextFollowUp">Next Follow-up Date</Label>
                   <Input
