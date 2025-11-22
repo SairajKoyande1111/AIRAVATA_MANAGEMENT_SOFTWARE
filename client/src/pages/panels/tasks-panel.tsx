@@ -10,7 +10,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogClose,
 } from '@/components/ui/dialog';
 import {
@@ -176,6 +175,7 @@ export default function TasksPanel() {
       }
 
       toast({ description: 'Task approved successfully' });
+      setOpenTaskDialog(false);
       setSelectedTask(null);
       fetchTasks();
     } catch (error) {
@@ -229,12 +229,10 @@ export default function TasksPanel() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete task');
-      }
+      if (!response.ok) throw new Error('Failed to delete task');
 
       toast({ description: 'Task deleted successfully' });
+      setOpenTaskDialog(false);
       setSelectedTask(null);
       fetchTasks();
     } catch (error) {
@@ -242,50 +240,40 @@ export default function TasksPanel() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-gray-100 text-gray-800';
-      case 'started':
-        return 'bg-blue-100 text-blue-800';
-      case 'working':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'pause':
-        return 'bg-red-100 text-red-800';
-      case 'completed':
-        return 'bg-orange-100 text-orange-800';
-      case 'approved':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const formatDate = (date: string) => {
-    const d = new Date(date);
-    return d.toLocaleDateString('en-IN', { 
+  const formatDate = (date: string | Date) => {
+    return new Date(date).toLocaleDateString('en-IN', {
       year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
+      month: 'long',
+      day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
-  const formatDateOnly = (date: string) => {
-    const d = new Date(date);
-    return d.toLocaleDateString('en-IN', { 
+  const formatDateOnly = (date: string | Date) => {
+    return new Date(date).toLocaleDateString('en-IN', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
-      weekday: 'short',
     });
+  };
+
+  const getStatusColor = (status: string) => {
+    const colors: { [key: string]: string } = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      started: 'bg-blue-100 text-blue-800',
+      working: 'bg-cyan-100 text-cyan-800',
+      pause: 'bg-orange-100 text-orange-800',
+      completed: 'bg-purple-100 text-purple-800',
+      approved: 'bg-green-100 text-green-800',
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
   const groupNotesByDate = (notes: any[]) => {
     const grouped: { [key: string]: any[] } = {};
     notes.forEach((note) => {
-      const dateKey = formatDateOnly(note.date);
+      const dateKey = formatDate(note.date);
       if (!grouped[dateKey]) {
         grouped[dateKey] = [];
       }
@@ -295,18 +283,14 @@ export default function TasksPanel() {
   };
 
   const getAssignmentLabel = (task: any) => {
-    const assignedToId = task.assignedTo._id?.toString() || task.assignedTo._id;
-    const assignedById = task.assignedBy._id?.toString() || task.assignedBy._id;
-    
-    if (assignedToId === assignedById) {
+    if (currentUser.id === task.assignedBy._id) {
       return 'Self';
     }
-    return task.assignedBy.name || task.assignedBy.email;
+    return task.assignedBy?.name || task.assignedBy?.email;
   };
 
   const canApprove = (task: any) => {
-    const assignedToId = task.assignedTo._id?.toString() || task.assignedTo._id;
-    return assignedToId !== currentUser.id && task.status === 'completed';
+    return task.status === 'completed' && currentUser.id !== task.assignedTo._id && !task.isApproved;
   };
 
   const activeTasks = tasks.filter(t => t.status !== 'approved');
@@ -329,35 +313,20 @@ export default function TasksPanel() {
   const groupedNotes = selectedTask ? groupNotesByDate(selectedTask.notes) : {};
   const dateKeys = Object.keys(groupedNotes).sort().reverse();
 
-  const groupTasksByUser = (taskList: any[]) => {
-    const grouped: { [key: string]: any[] } = {};
-    taskList.forEach((task) => {
-      const userId = task.assignedTo._id;
-      const userName = task.assignedTo.name || task.assignedTo.email;
-      const key = `${userId}|${userName}`;
-      if (!grouped[key]) {
-        grouped[key] = [];
-      }
-      grouped[key].push(task);
-    });
-    return Object.entries(grouped).map(([key, tasks]) => {
-      const [userId, userName] = key.split('|');
-      return { userId, userName, tasks };
-    });
-  };
-
-  const toggleUserExpand = (userId: string) => {
-    const newExpanded = new Set(expandedUsers);
-    if (newExpanded.has(userId)) {
-      newExpanded.delete(userId);
-    } else {
-      newExpanded.add(userId);
-    }
-    setExpandedUsers(newExpanded);
-  };
-
   const TaskTable = ({ taskList }: { taskList: any[] }) => {
-    const groupedByUser = groupTasksByUser(taskList);
+    const groupedByUser = taskList.reduce((acc, task) => {
+      const existing = acc.find(g => g.userId === task.assignedTo._id);
+      if (existing) {
+        existing.tasks.push(task);
+      } else {
+        acc.push({
+          userId: task.assignedTo._id,
+          userName: task.assignedTo.name || task.assignedTo.email,
+          tasks: [task],
+        });
+      }
+      return acc;
+    }, [] as any[]);
 
     return (
       <Table>
@@ -370,13 +339,13 @@ export default function TasksPanel() {
             <TableHead>Assigned By</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Created</TableHead>
-            <TableHead className="w-20">Actions</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {groupedByUser.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center text-gray-500 py-8">
+              <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                 No tasks found
               </TableCell>
             </TableRow>
@@ -390,7 +359,15 @@ export default function TasksPanel() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => toggleUserExpand(group.userId)}
+                        onClick={() => {
+                          const newExpanded = new Set(expandedUsers);
+                          if (newExpanded.has(group.userId)) {
+                            newExpanded.delete(group.userId);
+                          } else {
+                            newExpanded.add(group.userId);
+                          }
+                          setExpandedUsers(newExpanded);
+                        }}
                         className="h-6 w-6 p-0"
                       >
                         {isExpanded ? (
@@ -432,196 +409,21 @@ export default function TasksPanel() {
                         {formatDateOnly(task.createdAt)}
                       </TableCell>
                       <TableCell>
-                        <Dialog open={openTaskDialog && selectedTask?._id === task._id} onOpenChange={(open) => {
-                          setOpenTaskDialog(open);
-                          if (!open) setSelectedTask(null);
-                        }}>
-                          <DialogTrigger asChild>
-                            <Button
-                              data-testid={`button-view-${task._id}`}
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedTask(task);
-                                setOpenTaskDialog(true);
-                              }}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          {openTaskDialog && selectedTask && selectedTask._id === task._id && (
-                              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                                <DialogHeader>
-                                  <DialogTitle>{selectedTask.title}</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-6">
-                                  <div>
-                                    <p className="text-sm text-gray-600">{selectedTask.description}</p>
-                                  </div>
-
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <label className="text-xs font-semibold text-gray-600">Assigned To</label>
-                                      <p className="mt-1">{selectedTask.assignedTo.name || selectedTask.assignedTo.email}</p>
-                                    </div>
-                                    <div>
-                                      <label className="text-xs font-semibold text-gray-600">Assigned By</label>
-                                      <p className="mt-1">{getAssignmentLabel(selectedTask)}</p>
-                                    </div>
-                                  </div>
-
-                                  {selectedTask.isApproved && selectedTask.approvedBy && (
-                                    <div className="bg-green-50 p-3 rounded border border-green-200">
-                                      <p className="text-sm font-medium text-green-800">Approved By:</p>
-                                      <p className="text-sm text-green-700">{typeof selectedTask.approvedBy === 'object' ? (selectedTask.approvedBy.name || selectedTask.approvedBy.email) : selectedTask.approvedBy}</p>
-                                      <p className="text-xs text-green-600 mt-1">{formatDate(selectedTask.approvedAt)}</p>
-                                    </div>
-                                  )}
-
-                                  {selectedTask.pauseReason && (
-                                    <div className="bg-red-50 p-3 rounded border border-red-200">
-                                      <p className="text-sm font-medium text-red-800">Pause Reason:</p>
-                                      <p className="text-sm text-red-700">{selectedTask.pauseReason}</p>
-                                    </div>
-                                  )}
-
-                                  {selectedTask.status !== 'approved' && (
-                                    <div className="border-t pt-4 space-y-4">
-                                      <div>
-                                        <label className="text-sm font-semibold">Status</label>
-                                        <Select 
-                                          value={selectedTask.status} 
-                                          onValueChange={(status) => {
-                                            if (status === 'pause') {
-                                              setPauseReason('');
-                                              setNewStatus(status);
-                                            } else {
-                                              handleStatusChange(selectedTask._id, status);
-                                            }
-                                          }}
-                                        >
-                                          <SelectTrigger className="mt-2">
-                                            <SelectValue placeholder={selectedTask.status} />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="pending">Pending</SelectItem>
-                                            <SelectItem value="working">Working</SelectItem>
-                                            <SelectItem value="pause">Pause</SelectItem>
-                                            <SelectItem value="completed">Completed</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-
-                                      {newStatus === 'pause' && (
-                                        <div>
-                                          <label className="text-sm font-semibold">Pause Reason</label>
-                                          <Input
-                                            placeholder="Enter reason for pause"
-                                            value={pauseReason}
-                                            onChange={(e) => setPauseReason(e.target.value)}
-                                            className="mt-2"
-                                          />
-                                          <Button
-                                            size="sm"
-                                            className="mt-2"
-                                            onClick={() => handleStatusChange(selectedTask._id, 'pause')}
-                                          >
-                                            Confirm Pause
-                                          </Button>
-                                        </div>
-                                      )}
-
-                                      {canApprove(selectedTask) && (
-                                        <Button
-                                          variant="default"
-                                          className="w-full bg-green-600 hover:bg-green-700"
-                                          onClick={() => handleApproveTask(selectedTask._id)}
-                                        >
-                                          <CheckCircle className="w-4 h-4 mr-2" />
-                                          Approve Task
-                                        </Button>
-                                      )}
-                                    </div>
-                                  )}
-
-                                  <div className="border-t pt-4">
-                                    <h4 className="font-semibold mb-4">Daily Progress Notes</h4>
-                                    {dateKeys.length > 0 ? (
-                                      <div className="space-y-4 mb-6">
-                                        {dateKeys.map((dateKey) => (
-                                          <div
-                                            key={dateKey}
-                                            className="border rounded-lg p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition"
-                                            onClick={() =>
-                                              setSelectedDateFilter(
-                                                selectedDateFilter === dateKey ? null : dateKey
-                                              )
-                                            }
-                                          >
-                                            <div className="flex items-center justify-between">
-                                              <p className="font-medium text-sm">{dateKey}</p>
-                                              {selectedDateFilter === dateKey ? (
-                                                <ChevronUp className="w-4 h-4" />
-                                              ) : (
-                                                <ChevronDown className="w-4 h-4" />
-                                              )}
-                                            </div>
-
-                                            {selectedDateFilter === dateKey && (
-                                              <div className="mt-3 space-y-2 border-t pt-3">
-                                                {groupedNotes[dateKey].map((note: any, idx: number) => (
-                                                  <div key={idx} className="text-sm whitespace-pre-wrap bg-white p-2 rounded">
-                                                    {note.content}
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            )}
-                                          </div>
-                                        ))}
-                                      </div>
-                                    ) : (
-                                      <p className="text-sm text-gray-500 mb-6">No notes yet</p>
-                                    )}
-
-                                    <div className="space-y-3">
-                                      <label className="text-sm font-semibold">Add Note for Today</label>
-                                      <Textarea
-                                        placeholder="Add a note (use • for pointers)"
-                                        value={newNote}
-                                        onChange={(e) => setNewNote(e.target.value)}
-                                        className="flex-1"
-                                        rows={3}
-                                      />
-                                      <Button
-                                        onClick={() => handleAddNote(selectedTask._id)}
-                                      >
-                                        Add Note
-                                      </Button>
-                                    </div>
-                                  </div>
-
-                                  <div className="flex gap-2 justify-between pt-4 border-t">
-                                    <Button
-                                      variant="destructive"
-                                      onClick={() => {
-                                        handleDeleteTask(selectedTask._id);
-                                      }}
-                                    >
-                                      <Trash2 className="w-4 h-4 mr-2" />
-                                      Delete Task
-                                    </Button>
-                                    <DialogClose asChild>
-                                      <Button variant="outline">Close</Button>
-                                    </DialogClose>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            )}
-                          </Dialog>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  });
+                        <Button
+                          data-testid={`button-view-${task._id}`}
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedTask(task);
+                            setOpenTaskDialog(true);
+                          }}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                });
               }
               return rows;
             })
@@ -679,61 +481,59 @@ export default function TasksPanel() {
             📦 Archive Daily Tasks
           </Button>
           <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
-          <DialogTrigger asChild>
             <Button data-testid="button-create-task">
               <Plus className="w-4 h-4 mr-2" />
               Create Task
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Task</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Task Title</label>
-                <Input
-                  data-testid="input-task-title"
-                  placeholder="Enter task title"
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                />
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Task</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Task Title</label>
+                  <Input
+                    data-testid="input-task-title"
+                    placeholder="Enter task title"
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Description</label>
+                  <Textarea
+                    data-testid="input-task-description"
+                    placeholder="Enter task description"
+                    value={newTaskDescription}
+                    onChange={(e) => setNewTaskDescription(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Assign To</label>
+                  <Select value={newTaskAssignedTo} onValueChange={setNewTaskAssignedTo}>
+                    <SelectTrigger data-testid="select-assign-to">
+                      <SelectValue placeholder="Select user" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map((user) => (
+                        <SelectItem key={user._id} value={user._id}>
+                          {user._id === currentUser.id ? 'Self' : user.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  data-testid="button-submit-task"
+                  onClick={handleCreateTask}
+                  disabled={loading}
+                  className="w-full"
+                >
+                  {loading ? 'Creating...' : 'Create Task'}
+                </Button>
               </div>
-              <div>
-                <label className="text-sm font-medium">Description</label>
-                <Textarea
-                  data-testid="input-task-description"
-                  placeholder="Enter task description"
-                  value={newTaskDescription}
-                  onChange={(e) => setNewTaskDescription(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Assign To</label>
-                <Select value={newTaskAssignedTo} onValueChange={setNewTaskAssignedTo}>
-                  <SelectTrigger data-testid="select-assign-to">
-                    <SelectValue placeholder="Select user" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {users.map((user) => (
-                      <SelectItem key={user._id} value={user._id}>
-                        {user._id === currentUser.id ? 'Self' : user.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button
-                data-testid="button-submit-task"
-                onClick={handleCreateTask}
-                disabled={loading}
-                className="w-full"
-              >
-                {loading ? 'Creating...' : 'Create Task'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -793,6 +593,187 @@ export default function TasksPanel() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Task Detail Dialog - Moved outside table */}
+      <Dialog open={openTaskDialog} onOpenChange={(open) => {
+        setOpenTaskDialog(open);
+        if (!open) {
+          setSelectedTask(null);
+          setNewNote('');
+          setNewStatus('');
+          setPauseReason('');
+          setSelectedDateFilter(null);
+        }
+      }}>
+        {selectedTask && (
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{selectedTask.title}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div>
+                <p className="text-sm text-gray-600">{selectedTask.description}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-gray-600">Assigned To</label>
+                  <p className="mt-1">{selectedTask.assignedTo.name || selectedTask.assignedTo.email}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600">Assigned By</label>
+                  <p className="mt-1">{getAssignmentLabel(selectedTask)}</p>
+                </div>
+              </div>
+
+              {selectedTask.isApproved && selectedTask.approvedBy && (
+                <div className="bg-green-50 p-3 rounded border border-green-200">
+                  <p className="text-sm font-medium text-green-800">Approved By:</p>
+                  <p className="text-sm text-green-700">{typeof selectedTask.approvedBy === 'object' ? (selectedTask.approvedBy.name || selectedTask.approvedBy.email) : selectedTask.approvedBy}</p>
+                  <p className="text-xs text-green-600 mt-1">{formatDate(selectedTask.approvedAt)}</p>
+                </div>
+              )}
+
+              {selectedTask.pauseReason && (
+                <div className="bg-red-50 p-3 rounded border border-red-200">
+                  <p className="text-sm font-medium text-red-800">Pause Reason:</p>
+                  <p className="text-sm text-red-700">{selectedTask.pauseReason}</p>
+                </div>
+              )}
+
+              {selectedTask.status !== 'approved' && (
+                <div className="border-t pt-4 space-y-4">
+                  <div>
+                    <label className="text-sm font-semibold">Status</label>
+                    <Select 
+                      value={selectedTask.status} 
+                      onValueChange={(status) => {
+                        if (status === 'pause') {
+                          setPauseReason('');
+                          setNewStatus(status);
+                        } else {
+                          handleStatusChange(selectedTask._id, status);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder={selectedTask.status} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="working">Working</SelectItem>
+                        <SelectItem value="pause">Pause</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {newStatus === 'pause' && (
+                    <div>
+                      <label className="text-sm font-semibold">Pause Reason</label>
+                      <Input
+                        placeholder="Enter reason for pause"
+                        value={pauseReason}
+                        onChange={(e) => setPauseReason(e.target.value)}
+                        className="mt-2"
+                      />
+                      <Button
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => handleStatusChange(selectedTask._id, 'pause')}
+                      >
+                        Confirm Pause
+                      </Button>
+                    </div>
+                  )}
+
+                  {canApprove(selectedTask) && (
+                    <Button
+                      variant="default"
+                      className="w-full bg-green-600 hover:bg-green-700"
+                      onClick={() => handleApproveTask(selectedTask._id)}
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Approve Task
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-4">Daily Progress Notes</h4>
+                {dateKeys.length > 0 ? (
+                  <div className="space-y-4 mb-6">
+                    {dateKeys.map((dateKey) => (
+                      <div
+                        key={dateKey}
+                        className="border rounded-lg p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition"
+                        onClick={() =>
+                          setSelectedDateFilter(
+                            selectedDateFilter === dateKey ? null : dateKey
+                          )
+                        }
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-sm">{dateKey}</p>
+                          {selectedDateFilter === dateKey ? (
+                            <ChevronUp className="w-4 h-4" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4" />
+                          )}
+                        </div>
+
+                        {selectedDateFilter === dateKey && (
+                          <div className="mt-3 space-y-2 border-t pt-3">
+                            {groupedNotes[dateKey].map((note: any, idx: number) => (
+                              <div key={idx} className="text-sm whitespace-pre-wrap bg-white p-2 rounded">
+                                {note.content}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 mb-6">No notes yet</p>
+                )}
+
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold">Add Note for Today</label>
+                  <Textarea
+                    placeholder="Add a note (use • for pointers)"
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    className="flex-1"
+                    rows={3}
+                  />
+                  <Button
+                    onClick={() => handleAddNote(selectedTask._id)}
+                  >
+                    Add Note
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex gap-2 justify-between pt-4 border-t">
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    handleDeleteTask(selectedTask._id);
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Task
+                </Button>
+                <DialogClose asChild>
+                  <Button variant="outline">Close</Button>
+                </DialogClose>
+              </div>
+            </div>
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   );
 }
