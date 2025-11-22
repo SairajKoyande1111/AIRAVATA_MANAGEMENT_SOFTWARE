@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Eye, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react';
+import { Plus, Trash2, Eye, ChevronDown, ChevronUp, CheckCircle, Calendar } from 'lucide-react';
 
 export default function TasksPanel() {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -30,9 +30,11 @@ export default function TasksPanel() {
   const [loading, setLoading] = useState(false);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [openTaskDialog, setOpenTaskDialog] = useState(false);
   const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(null);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchDate, setSearchDate] = useState('');
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskAssignedTo, setNewTaskAssignedTo] = useState('');
@@ -300,15 +302,15 @@ export default function TasksPanel() {
   const filteredActiveTasks = activeTasks.filter((task) => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase());
     const createdDate = formatDateOnly(task.createdAt);
-    const matchesDate = createdDate.includes(searchTerm);
-    return matchesSearch || matchesDate;
+    const matchesDate = searchDate ? createdDate.includes(searchDate) : true;
+    return matchesSearch && matchesDate;
   });
 
   const filteredCompletedTasks = completedTasks.filter((task) => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase());
     const createdDate = formatDateOnly(task.createdAt);
-    const matchesDate = createdDate.includes(searchTerm);
-    return matchesSearch || matchesDate;
+    const matchesDate = searchDate ? createdDate.includes(searchDate) : true;
+    return matchesSearch && matchesDate;
   });
 
   const groupedNotes = selectedTask ? groupNotesByDate(selectedTask.notes) : {};
@@ -417,18 +419,24 @@ export default function TasksPanel() {
                         {formatDateOnly(task.createdAt)}
                       </TableCell>
                       <TableCell>
-                        <Dialog>
+                        <Dialog open={openTaskDialog && selectedTask?._id === task._id} onOpenChange={(open) => {
+                          setOpenTaskDialog(open);
+                          if (!open) setSelectedTask(null);
+                        }}>
                           <DialogTrigger asChild>
                             <Button
                               data-testid={`button-view-${task._id}`}
                               variant="ghost"
                               size="sm"
-                              onClick={() => setSelectedTask(task)}
+                              onClick={() => {
+                                setSelectedTask(task);
+                                setOpenTaskDialog(true);
+                              }}
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
                           </DialogTrigger>
-                            {selectedTask && selectedTask._id === task._id && (
+                          {openTaskDialog && selectedTask && selectedTask._id === task._id && (
                               <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                                 <DialogHeader>
                                   <DialogTitle>{selectedTask.title}</DialogTitle>
@@ -452,7 +460,7 @@ export default function TasksPanel() {
                                   {selectedTask.isApproved && selectedTask.approvedBy && (
                                     <div className="bg-green-50 p-3 rounded border border-green-200">
                                       <p className="text-sm font-medium text-green-800">Approved By:</p>
-                                      <p className="text-sm text-green-700">{selectedTask.approvedBy.name || selectedTask.approvedBy.email}</p>
+                                      <p className="text-sm text-green-700">{typeof selectedTask.approvedBy === 'object' ? (selectedTask.approvedBy.name || selectedTask.approvedBy.email) : selectedTask.approvedBy}</p>
                                       <p className="text-xs text-green-600 mt-1">{formatDate(selectedTask.approvedAt)}</p>
                                     </div>
                                   )}
@@ -685,12 +693,26 @@ export default function TasksPanel() {
 
       <div className="flex gap-4 items-center">
         <Input
-          placeholder="Search by task name or date (DD/MM/YYYY)..."
+          placeholder="Search by task name..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="flex-1"
           data-testid="input-search-tasks"
         />
+        <div className="flex items-center gap-2 border rounded-md px-3 py-2">
+          <Calendar className="w-4 h-4 text-gray-600" />
+          <Input
+            type="date"
+            value={searchDate}
+            onChange={(e) => {
+              const date = new Date(e.target.value);
+              const formatted = date.toLocaleDateString('en-IN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+              setSearchDate(formatted);
+            }}
+            className="border-0 p-0 w-32"
+            data-testid="input-search-date"
+          />
+        </div>
       </div>
 
       <Tabs defaultValue="active" className="w-full">
