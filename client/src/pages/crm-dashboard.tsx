@@ -39,7 +39,7 @@ export default function CRMDashboard() {
       case 'register-client':
         return <RegisterClientPanel editingClientId={editingClientId} onSave={() => setEditingClientId(null)} />;
       case 'clients':
-        return <ClientsPanel />;
+        return <ClientsPanel onNavigate={setActiveSection} />;
       case 'leads':
         return <LeadsPanel />;
       case 'followups':

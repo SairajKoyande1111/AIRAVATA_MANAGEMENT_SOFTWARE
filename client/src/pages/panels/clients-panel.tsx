@@ -22,11 +22,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useLocation } from 'wouter';
 import { Mail, Phone, MapPin, Building, Calendar, User, Briefcase, ChevronDown, ChevronUp, Edit, Trash2, Eye } from 'lucide-react';
 
-export default function ClientsPanel() {
-  const [, setLocation] = useLocation();
+interface ClientsPanelProps {
+  onNavigate?: (section: string) => void;
+}
+
+export default function ClientsPanel({ onNavigate }: ClientsPanelProps) {
   const [clients, setClients] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -86,10 +88,9 @@ export default function ClientsPanel() {
 
   const handleEditClient = (client: any) => {
     localStorage.setItem('editingClientData', JSON.stringify(client));
-    setLocation('/crm');
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('navigateTo', { detail: { section: 'register-client' } }));
-    }, 100);
+    if (onNavigate) {
+      onNavigate('register-client');
+    }
   };
 
   const filteredClients = clients.filter((client) => {
