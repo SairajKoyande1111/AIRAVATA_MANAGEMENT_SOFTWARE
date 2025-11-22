@@ -41,3 +41,10 @@ waitForPort = 5000
 
 [agent]
 mockupState = "FULLSTACK"
+
+[userenv]
+
+[userenv.development]
+MONGODB_URI = "mongodb+srv://sairajkoyande_db_user:ZlMPZXgLkbVgPfqo@airavatatechnologies.uui4cw6.mongodb.net/?appName=AiravataTechnologies"
+JWT_SECRET = "company-management-jwt-secret-key-2024-secure"
+PORT = "3000"
