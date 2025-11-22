@@ -13,7 +13,7 @@ export interface IClient extends Document {
   meetingDate: Date;
   meetingTime: string;
   meetingLocation: string;
-  salesPerson: string;
+  salesPersons: string[];
   meetingMode: 'On-Site' | 'Online';
 
   // Business Overview
@@ -86,9 +86,9 @@ const ClientSchema = new Schema<IClient>(
       type: String,
       trim: true,
     },
-    salesPerson: {
-      type: String,
-      trim: true,
+    salesPersons: {
+      type: [String],
+      default: [],
     },
     meetingMode: {
       type: String,

@@ -25,7 +25,7 @@ export default function RegisterClientPanel() {
     meetingDate: '',
     meetingTime: '',
     meetingLocation: '',
-    salesPerson: '',
+    salesPersons: [] as string[],
     meetingMode: '',
     businessOverview: '',
     industryType: '',
@@ -46,7 +46,15 @@ export default function RegisterClientPanel() {
   const [currentTechReq, setCurrentTechReq] = useState('');
   const { toast } = useToast();
 
-  const serviceOptions = ['WEBSITE', 'MOBILE APP', 'CUSTOM SOFTWARE', 'DIGITAL MARKETING', 'OTHERS'];
+  const fixedUsers = ['Aniket', 'Sairaj', 'Sejal', 'Pratik', 'Abhijeet'];
+  
+  const serviceOptions = [
+    { value: 'WEBSITE', label: 'Website Development' },
+    { value: 'MOBILE APP', label: 'Mobile App Development' },
+    { value: 'CUSTOM SOFTWARE', label: 'Custom Software Solution' },
+    { value: 'DIGITAL MARKETING', label: 'Digital Marketing' },
+    { value: 'OTHERS', label: 'Others' },
+  ];
 
   const handleAddProblem = () => {
     if (currentProblem.trim()) {
@@ -108,6 +116,15 @@ export default function RegisterClientPanel() {
     });
   };
 
+  const handleSalesPersonToggle = (person: string) => {
+    setFormData({
+      ...formData,
+      salesPersons: formData.salesPersons.includes(person)
+        ? formData.salesPersons.filter((p) => p !== person)
+        : [...formData.salesPersons, person],
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
@@ -143,7 +160,7 @@ export default function RegisterClientPanel() {
         meetingDate: '',
         meetingTime: '',
         meetingLocation: '',
-        salesPerson: '',
+        salesPersons: [],
         meetingMode: '',
         businessOverview: '',
         industryType: '',
@@ -280,14 +297,25 @@ export default function RegisterClientPanel() {
                     onChange={(e) => setFormData({ ...formData, meetingLocation: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="salesPerson">Sales/BD Person Name</Label>
-                  <Input
-                    id="salesPerson"
-                    data-testid="input-sales-person"
-                    value={formData.salesPerson}
-                    onChange={(e) => setFormData({ ...formData, salesPerson: e.target.value })}
-                  />
+                <div className="space-y-2 col-span-2">
+                  <Label>Sales/BD Person Name (Select one or more)</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {fixedUsers.map((person) => (
+                      <button
+                        key={person}
+                        type="button"
+                        onClick={() => handleSalesPersonToggle(person)}
+                        data-testid={`button-person-${person}`}
+                        className={`px-4 py-2 rounded-lg border transition-colors ${
+                          formData.salesPersons.includes(person)
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-600'
+                        }`}
+                      >
+                        {person}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div className="space-y-2 col-span-2">
                   <Label htmlFor="meetingMode">Mode of Meeting</Label>
@@ -420,17 +448,17 @@ export default function RegisterClientPanel() {
                 <div className="flex flex-wrap gap-3">
                   {serviceOptions.map((service) => (
                     <button
-                      key={service}
+                      key={service.value}
                       type="button"
-                      onClick={() => handleServiceToggle(service)}
-                      data-testid={`button-service-${service}`}
+                      onClick={() => handleServiceToggle(service.value)}
+                      data-testid={`button-service-${service.value}`}
                       className={`px-4 py-2 rounded-lg border transition-colors ${
-                        formData.services.includes(service)
+                        formData.services.includes(service.value)
                           ? 'bg-purple-600 text-white border-purple-600'
                           : 'bg-white text-gray-700 border-gray-300 hover:border-purple-600'
                       }`}
                     >
-                      {service}
+                      {service.label}
                     </button>
                   ))}
                 </div>
