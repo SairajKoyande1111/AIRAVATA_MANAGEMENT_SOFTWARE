@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +41,7 @@ export default function TasksPanel() {
   const [newStatus, setNewStatus] = useState('');
   const [pauseReason, setPauseReason] = useState('');
   const [dateInputValue, setDateInputValue] = useState('');
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -551,6 +552,7 @@ export default function TasksPanel() {
         />
         <div className="flex items-center gap-2">
           <input
+            ref={dateInputRef}
             type="date"
             value={dateInputValue}
             onChange={(e) => {
@@ -562,15 +564,13 @@ export default function TasksPanel() {
               }
             }}
             className="hidden"
-            id="task-date-filter"
             data-testid="input-search-date"
           />
           <button
             type="button"
             onClick={() => {
-              const dateInput = document.getElementById('task-date-filter') as HTMLInputElement;
-              if (dateInput) {
-                dateInput.click();
+              if (dateInputRef.current) {
+                dateInputRef.current.click();
               }
             }}
             className="cursor-pointer p-2 rounded hover:bg-gray-100 transition-colors flex items-center gap-2"
