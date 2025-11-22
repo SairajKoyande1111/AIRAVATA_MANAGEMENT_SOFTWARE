@@ -154,11 +154,24 @@ export default function LeadsPanel() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...formData,
+          clientId: formData.clientId,
+          registeredDate: formData.registeredDate,
+          assignedTo: formData.assignedTo,
+          requirementType: formData.requirementType,
+          otherText: formData.otherText,
           requirementDetails: typeof formData.requirementDetails === 'string' 
             ? formData.requirementDetails.split('\n').filter((r: string) => r.trim())
             : formData.requirementDetails,
-          estimatedBudget: formData.estimatedBudget ? parseInt(formData.estimatedBudget) : null,
+          priority: formData.priority,
+          stage: formData.stage,
+          serviceBudgets: Object.fromEntries(
+            Object.entries(formData.serviceBudgets).map(([service, budget]) => [
+              service,
+              budget ? parseInt(budget as string) : 0,
+            ])
+          ),
+          nextFollowUp: formData.nextFollowUp,
+          notes: formData.notes,
         }),
       });
 
@@ -180,7 +193,7 @@ export default function LeadsPanel() {
         requirementDetails: [],
         priority: 'medium',
         stage: 'new',
-        estimatedBudget: '',
+        serviceBudgets: {},
         nextFollowUp: '',
         notes: '',
       });

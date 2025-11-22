@@ -3,13 +3,13 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface ILead extends Document {
   clientId: mongoose.Types.ObjectId;
   registeredDate: Date;
-  assignedTo: mongoose.Types.ObjectId;
-  requirementType: 'Website' | 'Mobile app' | 'Custom software' | 'Digital marketing' | 'Other';
+  assignedTo: mongoose.Types.ObjectId[];
+  requirementType: string[];
   otherText?: string;
   requirementDetails: string[];
   priority: 'low' | 'medium' | 'high';
   stage: 'new' | 'contacted' | 'qualified' | 'proposal' | 'meeting' | 'negotiation' | 'won' | 'lost';
-  estimatedBudget?: number;
+  serviceBudgets?: { [key: string]: number };
   nextFollowUp?: Date;
   notes?: string;
   createdAt: Date;
@@ -28,13 +28,12 @@ const LeadSchema = new Schema<ILead>(
       required: true,
     },
     assignedTo: {
-      type: Schema.Types.ObjectId,
+      type: [Schema.Types.ObjectId],
       ref: 'User',
       required: true,
     },
     requirementType: {
-      type: String,
-      enum: ['Website', 'Mobile app', 'Custom software', 'Digital marketing', 'Other'],
+      type: [String],
       required: true,
     },
     otherText: {
@@ -55,8 +54,9 @@ const LeadSchema = new Schema<ILead>(
       enum: ['new', 'contacted', 'qualified', 'proposal', 'meeting', 'negotiation', 'won', 'lost'],
       default: 'new',
     },
-    estimatedBudget: {
-      type: Number,
+    serviceBudgets: {
+      type: Map,
+      of: Number,
     },
     nextFollowUp: {
       type: Date,
