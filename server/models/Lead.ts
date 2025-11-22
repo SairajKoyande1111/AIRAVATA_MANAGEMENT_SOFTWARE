@@ -1,0 +1,73 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface ILead extends Document {
+  clientId: mongoose.Types.ObjectId;
+  registeredDate: Date;
+  assignedTo: mongoose.Types.ObjectId;
+  requirementType: 'Website' | 'Mobile app' | 'Custom software' | 'Digital marketing' | 'Other';
+  otherText?: string;
+  requirementDetails: string[];
+  priority: 'low' | 'medium' | 'high';
+  stage: 'new' | 'contacted' | 'qualified' | 'proposal' | 'meeting' | 'negotiation' | 'won' | 'lost';
+  estimatedBudget?: number;
+  nextFollowUp?: Date;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const LeadSchema = new Schema<ILead>(
+  {
+    clientId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Client',
+      required: true,
+    },
+    registeredDate: {
+      type: Date,
+      required: true,
+    },
+    assignedTo: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    requirementType: {
+      type: String,
+      enum: ['Website', 'Mobile app', 'Custom software', 'Digital marketing', 'Other'],
+      required: true,
+    },
+    otherText: {
+      type: String,
+      trim: true,
+    },
+    requirementDetails: {
+      type: [String],
+      default: [],
+    },
+    priority: {
+      type: String,
+      enum: ['low', 'medium', 'high'],
+      default: 'medium',
+    },
+    stage: {
+      type: String,
+      enum: ['new', 'contacted', 'qualified', 'proposal', 'meeting', 'negotiation', 'won', 'lost'],
+      default: 'new',
+    },
+    estimatedBudget: {
+      type: Number,
+    },
+    nextFollowUp: {
+      type: Date,
+    },
+    notes: {
+      type: String,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+export default mongoose.model<ILead>('Lead', LeadSchema);
