@@ -550,7 +550,9 @@ export default function TasksPanel() {
         />
         <input
           type="date"
-          value={searchDate}
+          ref={(ref) => {
+            if (ref) (window as any).taskDateInput = ref;
+          }}
           onChange={(e) => {
             const date = new Date(e.target.value);
             const formatted = date.toLocaleDateString('en-IN', { year: 'numeric', month: '2-digit', day: '2-digit' });
@@ -560,14 +562,18 @@ export default function TasksPanel() {
           id="task-date-filter"
           data-testid="input-search-date"
         />
-        <label
-          htmlFor="task-date-filter"
-          className="cursor-pointer p-2 rounded hover:bg-gray-100 transition-colors"
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            (document.getElementById('task-date-filter') as HTMLInputElement)?.click();
+          }}
+          className="p-2"
           title={searchDate ? `Filtering by ${searchDate}` : 'Click to filter by date'}
           data-testid="button-date-filter-tasks"
         >
           <Calendar className={`w-5 h-5 ${searchDate ? 'text-blue-600' : 'text-gray-600'}`} />
-        </label>
+        </Button>
       </div>
 
       <Tabs defaultValue="active" className="w-full">
