@@ -86,11 +86,17 @@ export const getAllArchives = async (req: AuthRequest, res: Response) => {
       .populate('approvedBy', 'email name')
       .sort({ archivedAt: -1 });
 
-    // Group by archive date
+    // Group by archive date in IST
     const groupedByDate: { [key: string]: any[] } = {};
 
     archives.forEach(archive => {
-      const dateKey = new Date(archive.archivedAt).toLocaleDateString('en-IN');
+      // Convert to IST (UTC+5:30) for proper date grouping
+      const istDate = new Date(archive.archivedAt.getTime() + (5.5 * 60 * 60 * 1000));
+      const dateKey = istDate.toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
       if (!groupedByDate[dateKey]) {
         groupedByDate[dateKey] = [];
       }
