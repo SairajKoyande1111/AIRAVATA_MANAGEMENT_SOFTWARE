@@ -20,8 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, Eye, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react';
 
 export default function TasksPanel() {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -30,6 +31,7 @@ export default function TasksPanel() {
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskAssignedTo, setNewTaskAssignedTo] = useState('');
@@ -144,6 +146,31 @@ export default function TasksPanel() {
     }
   };
 
+  const handleApproveTask = async (taskId: string) => {
+    const token = localStorage.getItem('token');
+
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/approve`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to approve task');
+      }
+
+      toast({ description: 'Task approved successfully' });
+      setSelectedTask(null);
+      fetchTasks();
+    } catch (error) {
+      toast({ description: String(error), variant: 'destructive' });
+    }
+  };
+
   const handleAddNote = async (taskId: string) => {
     if (!newNote) {
       toast({ description: 'Please enter a note', variant: 'destructive' });
@@ -201,6 +228,8 @@ export default function TasksPanel() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case 'pending':
+        return 'bg-gray-100 text-gray-800';
       case 'started':
         return 'bg-blue-100 text-blue-800';
       case 'working':
@@ -208,6 +237,8 @@ export default function TasksPanel() {
       case 'pause':
         return 'bg-red-100 text-red-800';
       case 'completed':
+        return 'bg-orange-100 text-orange-800';
+      case 'approved':
         return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -257,8 +288,259 @@ export default function TasksPanel() {
     return task.assignedBy.name || task.assignedBy.email;
   };
 
+  const canApprove = (task: any) => {
+    const assignedToId = task.assignedTo._id?.toString() || task.assignedTo._id;
+    return assignedToId !== currentUser.id && task.status === 'completed';
+  };
+
+  const activeTasks = tasks.filter(t => t.status !== 'approved');
+  const completedTasks = tasks.filter(t => t.status === 'approved');
+
+  const filteredActiveTasks = activeTasks.filter((task) => {
+    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const createdDate = formatDateOnly(task.createdAt);
+    const matchesDate = createdDate.includes(searchTerm);
+    return matchesSearch || matchesDate;
+  });
+
+  const filteredCompletedTasks = completedTasks.filter((task) => {
+    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const createdDate = formatDateOnly(task.createdAt);
+    const matchesDate = createdDate.includes(searchTerm);
+    return matchesSearch || matchesDate;
+  });
+
   const groupedNotes = selectedTask ? groupNotesByDate(selectedTask.notes) : {};
   const dateKeys = Object.keys(groupedNotes).sort().reverse();
+
+  const TaskTable = ({ taskList }: { taskList: any[] }) => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Title</TableHead>
+          <TableHead>Description</TableHead>
+          <TableHead>Assigned To</TableHead>
+          <TableHead>Assigned By</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Created</TableHead>
+          <TableHead className="w-20">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {taskList.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={7} className="text-center text-gray-500 py-8">
+              No tasks found
+            </TableCell>
+          </TableRow>
+        ) : (
+          taskList.map((task) => (
+            <TableRow key={task._id} data-testid={`row-task-${task._id}`} className="cursor-pointer hover:bg-gray-50">
+              <TableCell className="font-medium">{task.title}</TableCell>
+              <TableCell className="text-sm text-gray-600 max-w-xs truncate">{task.description}</TableCell>
+              <TableCell>
+                <span className="text-sm">{task.assignedTo.name || task.assignedTo.email}</span>
+              </TableCell>
+              <TableCell>
+                <span className="text-sm">{getAssignmentLabel(task)}</span>
+              </TableCell>
+              <TableCell>
+                <Badge
+                  data-testid={`badge-status-${task._id}`}
+                  className={getStatusColor(task.status)}
+                >
+                  {task.status}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-sm text-gray-500">
+                {formatDateOnly(task.createdAt)}
+              </TableCell>
+              <TableCell>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      data-testid={`button-view-${task._id}`}
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedTask(task)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </DialogTrigger>
+                  {selectedTask && selectedTask._id === task._id && (
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>{selectedTask.title}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-6">
+                        <div>
+                          <p className="text-sm text-gray-600">{selectedTask.description}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-xs font-semibold text-gray-600">Assigned To</label>
+                            <p className="mt-1">{selectedTask.assignedTo.name || selectedTask.assignedTo.email}</p>
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold text-gray-600">Assigned By</label>
+                            <p className="mt-1">{getAssignmentLabel(selectedTask)}</p>
+                          </div>
+                        </div>
+
+                        {selectedTask.pauseReason && (
+                          <div className="bg-red-50 p-3 rounded border border-red-200">
+                            <p className="text-sm font-medium text-red-800">Pause Reason:</p>
+                            <p className="text-sm text-red-700">{selectedTask.pauseReason}</p>
+                          </div>
+                        )}
+
+                        <div className="border-t pt-4">
+                          <label className="text-sm font-semibold">Update Status</label>
+                          <div className="flex gap-2 mt-3 flex-wrap">
+                            {selectedTask.status === 'pending' && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleStatusChange(selectedTask._id, 'started')}
+                              >
+                                Start Task
+                              </Button>
+                            )}
+
+                            {selectedTask.status === 'started' && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleStatusChange(selectedTask._id, 'working')}
+                              >
+                                Mark Working
+                              </Button>
+                            )}
+
+                            <Select value={newStatus} onValueChange={setNewStatus}>
+                              <SelectTrigger className="w-40">
+                                <SelectValue placeholder="Change status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {selectedTask.status !== 'pending' && <SelectItem value="started">Started</SelectItem>}
+                                <SelectItem value="working">Working</SelectItem>
+                                <SelectItem value="pause">Pause</SelectItem>
+                                <SelectItem value="completed">Completed</SelectItem>
+                              </SelectContent>
+                            </Select>
+
+                            {newStatus === 'pause' && (
+                              <Input
+                                placeholder="Reason for pause"
+                                value={pauseReason}
+                                onChange={(e) => setPauseReason(e.target.value)}
+                                className="flex-1"
+                              />
+                            )}
+
+                            {newStatus && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleStatusChange(selectedTask._id, newStatus)}
+                              >
+                                Update
+                              </Button>
+                            )}
+
+                            {canApprove(selectedTask) && (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => handleApproveTask(selectedTask._id)}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Approve Task
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="border-t pt-4">
+                          <h4 className="font-semibold mb-4">Daily Progress Notes</h4>
+                          {dateKeys.length > 0 ? (
+                            <div className="space-y-4 mb-6">
+                              {dateKeys.map((dateKey) => (
+                                <div
+                                  key={dateKey}
+                                  className="border rounded-lg p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition"
+                                  onClick={() =>
+                                    setSelectedDateFilter(
+                                      selectedDateFilter === dateKey ? null : dateKey
+                                    )
+                                  }
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <p className="font-medium text-sm">{dateKey}</p>
+                                    {selectedDateFilter === dateKey ? (
+                                      <ChevronUp className="w-4 h-4" />
+                                    ) : (
+                                      <ChevronDown className="w-4 h-4" />
+                                    )}
+                                  </div>
+
+                                  {selectedDateFilter === dateKey && (
+                                    <div className="mt-3 space-y-2 border-t pt-3">
+                                      {groupedNotes[dateKey].map((note: any, idx: number) => (
+                                        <div key={idx} className="text-sm whitespace-pre-wrap bg-white p-2 rounded">
+                                          {note.content}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500 mb-6">No notes yet</p>
+                          )}
+
+                          <div className="space-y-3">
+                            <label className="text-sm font-semibold">Add Note for Today</label>
+                            <Textarea
+                              placeholder="Add a note (use • for pointers)"
+                              value={newNote}
+                              onChange={(e) => setNewNote(e.target.value)}
+                              className="flex-1"
+                              rows={3}
+                            />
+                            <Button
+                              onClick={() => handleAddNote(selectedTask._id)}
+                            >
+                              Add Note
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 justify-between pt-4 border-t">
+                          <Button
+                            variant="destructive"
+                            onClick={() => {
+                              handleDeleteTask(selectedTask._id);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete Task
+                          </Button>
+                          <DialogClose asChild>
+                            <Button variant="outline">Close</Button>
+                          </DialogClose>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  )}
+                </Dialog>
+              </TableCell>
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </Table>
+  );
 
   return (
     <div className="p-8 space-y-6">
@@ -325,209 +607,48 @@ export default function TasksPanel() {
         </Dialog>
       </div>
 
-      {tasks.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-gray-500">No tasks yet. Create one to get started!</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>All Tasks</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Assigned To</TableHead>
-                  <TableHead>Assigned By</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="w-20">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tasks.map((task) => (
-                  <TableRow key={task._id} data-testid={`row-task-${task._id}`} className="cursor-pointer hover:bg-gray-50">
-                    <TableCell className="font-medium">{task.title}</TableCell>
-                    <TableCell className="text-sm text-gray-600 max-w-xs truncate">{task.description}</TableCell>
-                    <TableCell>
-                      <span className="text-sm">{task.assignedTo.name || task.assignedTo.email}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm">{getAssignmentLabel(task)}</span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        data-testid={`badge-status-${task._id}`}
-                        className={getStatusColor(task.status)}
-                      >
-                        {task.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-500">
-                      {formatDateOnly(task.createdAt)}
-                    </TableCell>
-                    <TableCell>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            data-testid={`button-view-${task._id}`}
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedTask(task)}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        {selectedTask && selectedTask._id === task._id && (
-                          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>{selectedTask.title}</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-6">
-                              <div>
-                                <p className="text-sm text-gray-600">{selectedTask.description}</p>
-                              </div>
+      <div className="flex gap-4 items-center">
+        <Input
+          placeholder="Search by task name or date (DD/MM/YYYY)..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="flex-1"
+          data-testid="input-search-tasks"
+        />
+      </div>
 
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <label className="text-xs font-semibold text-gray-600">Assigned To</label>
-                                  <p className="mt-1">{selectedTask.assignedTo.name || selectedTask.assignedTo.email}</p>
-                                </div>
-                                <div>
-                                  <label className="text-xs font-semibold text-gray-600">Assigned By</label>
-                                  <p className="mt-1">{getAssignmentLabel(selectedTask)}</p>
-                                </div>
-                              </div>
+      <Tabs defaultValue="active" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="active">
+            Active Tasks ({filteredActiveTasks.length})
+          </TabsTrigger>
+          <TabsTrigger value="completed">
+            Completed & Approved ({filteredCompletedTasks.length})
+          </TabsTrigger>
+        </TabsList>
 
-                              {selectedTask.pauseReason && (
-                                <div className="bg-red-50 p-3 rounded border border-red-200">
-                                  <p className="text-sm font-medium text-red-800">Pause Reason:</p>
-                                  <p className="text-sm text-red-700">{selectedTask.pauseReason}</p>
-                                </div>
-                              )}
+        <TabsContent value="active" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Active Tasks</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TaskTable taskList={filteredActiveTasks} />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                              <div className="border-t pt-4">
-                                <label className="text-sm font-semibold">Update Status</label>
-                                <div className="flex gap-2 mt-3 flex-wrap">
-                                  <Select value={newStatus} onValueChange={setNewStatus}>
-                                    <SelectTrigger className="w-40">
-                                      <SelectValue placeholder="Change status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="started">Started</SelectItem>
-                                      <SelectItem value="working">Working</SelectItem>
-                                      <SelectItem value="pause">Pause</SelectItem>
-                                      <SelectItem value="completed">Completed</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-
-                                  {newStatus === 'pause' && (
-                                    <Input
-                                      placeholder="Reason for pause"
-                                      value={pauseReason}
-                                      onChange={(e) => setPauseReason(e.target.value)}
-                                      className="flex-1"
-                                    />
-                                  )}
-
-                                  {newStatus && (
-                                    <Button
-                                      size="sm"
-                                      onClick={() => handleStatusChange(selectedTask._id, newStatus)}
-                                    >
-                                      Update
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="border-t pt-4">
-                                <h4 className="font-semibold mb-4">Daily Progress Notes</h4>
-                                {dateKeys.length > 0 ? (
-                                  <div className="space-y-4 mb-6">
-                                    {dateKeys.map((dateKey) => (
-                                      <div
-                                        key={dateKey}
-                                        className="border rounded-lg p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition"
-                                        onClick={() =>
-                                          setSelectedDateFilter(
-                                            selectedDateFilter === dateKey ? null : dateKey
-                                          )
-                                        }
-                                      >
-                                        <div className="flex items-center justify-between">
-                                          <p className="font-medium text-sm">{dateKey}</p>
-                                          {selectedDateFilter === dateKey ? (
-                                            <ChevronUp className="w-4 h-4" />
-                                          ) : (
-                                            <ChevronDown className="w-4 h-4" />
-                                          )}
-                                        </div>
-
-                                        {selectedDateFilter === dateKey && (
-                                          <div className="mt-3 space-y-2 border-t pt-3">
-                                            {groupedNotes[dateKey].map((note: any, idx: number) => (
-                                              <div key={idx} className="text-sm whitespace-pre-wrap bg-white p-2 rounded">
-                                                {note.content}
-                                              </div>
-                                            ))}
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-sm text-gray-500 mb-6">No notes yet</p>
-                                )}
-
-                                <div className="space-y-3">
-                                  <label className="text-sm font-semibold">Add Note for Today</label>
-                                  <Textarea
-                                    placeholder="Add a note (use • for pointers)"
-                                    value={newNote}
-                                    onChange={(e) => setNewNote(e.target.value)}
-                                    className="flex-1"
-                                    rows={3}
-                                  />
-                                  <Button
-                                    onClick={() => handleAddNote(selectedTask._id)}
-                                  >
-                                    Add Note
-                                  </Button>
-                                </div>
-                              </div>
-
-                              <div className="flex gap-2 justify-between pt-4 border-t">
-                                <Button
-                                  variant="destructive"
-                                  onClick={() => {
-                                    handleDeleteTask(selectedTask._id);
-                                  }}
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete Task
-                                </Button>
-                                <DialogClose asChild>
-                                  <Button variant="outline">Close</Button>
-                                </DialogClose>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        )}
-                      </Dialog>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="completed" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Completed & Approved Tasks</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TaskTable taskList={filteredCompletedTasks} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -50,6 +50,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/tasks/:taskId/status", authenticateToken, taskController.updateTaskStatus);
   app.post("/api/tasks/:taskId/notes", authenticateToken, taskController.addNote);
   app.delete("/api/tasks/:taskId", authenticateToken, taskController.deleteTask);
+  app.post("/api/tasks/:taskId/approve", authenticateToken, taskController.approveTask);
 
   // User routes (protected)
   app.get("/api/users", authenticateToken, userController.getUsers);

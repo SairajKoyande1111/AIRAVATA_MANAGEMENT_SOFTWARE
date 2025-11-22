@@ -10,9 +10,12 @@ interface ITask extends Document {
   description: string;
   assignedTo: mongoose.Types.ObjectId;
   assignedBy: mongoose.Types.ObjectId;
-  status: 'started' | 'working' | 'pause' | 'completed';
+  status: 'pending' | 'started' | 'working' | 'pause' | 'completed' | 'approved';
   pauseReason?: string;
   notes: INote[];
+  isApproved: boolean;
+  approvedBy?: mongoose.Types.ObjectId;
+  approvedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,8 +28,8 @@ const taskSchema = new Schema<ITask>(
     assignedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     status: {
       type: String,
-      enum: ['started', 'working', 'pause', 'completed'],
-      default: 'started',
+      enum: ['pending', 'started', 'working', 'pause', 'completed', 'approved'],
+      default: 'pending',
     },
     pauseReason: { type: String },
     notes: [
@@ -35,6 +38,9 @@ const taskSchema = new Schema<ITask>(
         date: { type: Date, required: true },
       },
     ],
+    isApproved: { type: Boolean, default: false },
+    approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    approvedAt: { type: Date },
   },
   { timestamps: true }
 );

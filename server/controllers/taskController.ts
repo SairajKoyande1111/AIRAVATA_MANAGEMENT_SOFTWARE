@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { AuthRequest } from '../middleware/auth';
 import Task from '../models/Task';
 import User from '../models/User';
@@ -119,5 +120,43 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Delete task error:', error);
     res.status(500).json({ error: 'Server error deleting task' });
+  }
+};
+
+export const approveTask = async (req: AuthRequest, res: Response) => {
+  try {
+    const { taskId } = req.params;
+    const userId = req.userId!;
+
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    // Check if task is completed
+    if (task.status !== 'completed') {
+      return res.status(400).json({ error: 'Task must be completed before approval' });
+    }
+
+    // Check if the approver is not the task worker
+    const assignedToId = task.assignedTo.toString();
+    if (assignedToId === userId) {
+      return res.status(400).json({ error: 'Cannot approve your own task' });
+    }
+
+    task.status = 'approved';
+    task.isApproved = true;
+    task.approvedBy = new (mongoose.Types.ObjectId as any)(userId);
+    task.approvedAt = new Date();
+
+    await task.save();
+    await task.populate('assignedTo', 'email name');
+    await task.populate('assignedBy', 'email name');
+    await task.populate('approvedBy', 'email name');
+
+    res.json({ message: 'Task approved successfully', task });
+  } catch (error) {
+    console.error('Approve task error:', error);
+    res.status(500).json({ error: 'Server error approving task' });
   }
 };
