@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, Eye, Calendar } from 'lucide-react';
+import { ChevronDown, Eye, Calendar, Search, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function HistoryPanel() {
@@ -21,6 +21,8 @@ export default function HistoryPanel() {
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [openTaskDialog, setOpenTaskDialog] = useState(false);
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+  const [searchText, setSearchText] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
   const { toast } = useToast();
 
   const fetchArchives = async () => {
@@ -76,12 +78,106 @@ export default function HistoryPanel() {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
+  const getFilteredArchives = () => {
+    let filtered = { ...archives };
+
+    // Filter by date
+    if (selectedDate) {
+      const dateString = new Date(selectedDate).toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      filtered = Object.keys(filtered).reduce((acc, key) => {
+        if (key === dateString) {
+          acc[key] = filtered[key];
+        }
+        return acc;
+      }, {} as { [key: string]: any[] });
+    }
+
+    // Filter by search text
+    if (searchText.trim()) {
+      const lowerSearch = searchText.toLowerCase();
+      Object.keys(filtered).forEach(date => {
+        filtered[date] = filtered[date].filter(task =>
+          task.title.toLowerCase().includes(lowerSearch) ||
+          task.description.toLowerCase().includes(lowerSearch) ||
+          (task.assignedTo?.name || task.assignedTo?.email || '').toLowerCase().includes(lowerSearch)
+        );
+      });
+
+      // Remove empty date groups
+      filtered = Object.keys(filtered).reduce((acc, key) => {
+        if (filtered[key].length > 0) {
+          acc[key] = filtered[key];
+        }
+        return acc;
+      }, {} as { [key: string]: any[] });
+    }
+
+    return filtered;
+  };
+
+  const filteredArchives = getFilteredArchives();
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-6 py-4">
       <div>
         <h2 className="text-2xl font-bold">Tasks History</h2>
         <p className="text-gray-600 mt-1">View all archived tasks organized by date</p>
       </div>
+
+      {/* Search and Filter Controls */}
+      {!loading && Object.keys(archives).length > 0 && (
+        <Card className="bg-gray-50">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Search by task title, description, or assignee..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  className="pl-10 pr-10"
+                  data-testid="input-search-history"
+                />
+                {searchText && (
+                  <button
+                    onClick={() => setSearchText('')}
+                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                    data-testid="button-clear-search"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Date Filter */}
+              <div className="flex items-center gap-3">
+                <Calendar className="w-5 h-5 text-gray-600" />
+                <Input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-48"
+                  data-testid="input-date-filter"
+                />
+                {selectedDate && (
+                  <button
+                    onClick={() => setSelectedDate('')}
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    data-testid="button-clear-date"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {loading ? (
         <Card>
@@ -95,9 +191,15 @@ export default function HistoryPanel() {
             <p className="text-gray-500">No archived tasks yet</p>
           </CardContent>
         </Card>
+      ) : Object.keys(filteredArchives).length === 0 ? (
+        <Card>
+          <CardContent className="flex justify-center py-8">
+            <p className="text-gray-500">No tasks match your search or date filter</p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-4">
-          {Object.entries(archives)
+          {Object.entries(filteredArchives)
             .sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime())
             .map(([date, tasks]) => (
               <Card key={date}>
