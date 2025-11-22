@@ -348,7 +348,7 @@ export default function TasksPanel() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead></TableHead>
+            <TableHead className="w-8"></TableHead>
             <TableHead>Title</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Assigned To</TableHead>
@@ -366,66 +366,68 @@ export default function TasksPanel() {
               </TableCell>
             </TableRow>
           ) : (
-            groupedByUser.map((group) => {
+            groupedByUser.flatMap((group) => {
               const isExpanded = expandedUsers.has(group.userId);
-              return (
-                <div key={group.userId}>
-                  <TableRow className="hover:bg-gray-50 cursor-pointer">
-                    <TableCell className="w-8">
-                      {group.tasks.length > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleUserExpand(group.userId)}
-                          className="h-6 w-6 p-0"
+              const rows: any[] = [
+                <TableRow key={`group-${group.userId}`} className="bg-blue-50 hover:bg-blue-100 cursor-pointer">
+                  <TableCell className="w-8">
+                    {group.tasks.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleUserExpand(group.userId)}
+                        className="h-6 w-6 p-0"
+                      >
+                        {isExpanded ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </Button>
+                    )}
+                  </TableCell>
+                  <TableCell colSpan={7} className="font-semibold">
+                    {group.userName} ({group.tasks.length} {group.tasks.length === 1 ? 'task' : 'tasks'})
+                  </TableCell>
+                </TableRow>,
+              ];
+
+              if (isExpanded || group.tasks.length === 1) {
+                group.tasks.forEach((task) => {
+                  rows.push(
+                    <TableRow key={task._id} data-testid={`row-task-${task._id}`} className="hover:bg-gray-50">
+                      <TableCell></TableCell>
+                      <TableCell className="font-medium">{task.title}</TableCell>
+                      <TableCell className="text-sm text-gray-600 max-w-xs truncate">{task.description}</TableCell>
+                      <TableCell>
+                        <span className="text-sm">{task.assignedTo.name || task.assignedTo.email}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">{getAssignmentLabel(task)}</span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          data-testid={`badge-status-${task._id}`}
+                          className={getStatusColor(task.status)}
                         >
-                          {isExpanded ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </Button>
-                      )}
-                    </TableCell>
-                    <TableCell colSpan={7} className="font-semibold">
-                      {group.userName} ({group.tasks.length} {group.tasks.length === 1 ? 'task' : 'tasks'})
-                    </TableCell>
-                  </TableRow>
-                  {(isExpanded || group.tasks.length === 1) &&
-                    group.tasks.map((task) => (
-                      <TableRow key={task._id} data-testid={`row-task-${task._id}`} className="hover:bg-gray-50">
-                        <TableCell></TableCell>
-                        <TableCell className="font-medium">{task.title}</TableCell>
-                        <TableCell className="text-sm text-gray-600 max-w-xs truncate">{task.description}</TableCell>
-                        <TableCell>
-                          <span className="text-sm">{task.assignedTo.name || task.assignedTo.email}</span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm">{getAssignmentLabel(task)}</span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            data-testid={`badge-status-${task._id}`}
-                            className={getStatusColor(task.status)}
-                          >
-                            {task.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-gray-500">
-                          {formatDateOnly(task.createdAt)}
-                        </TableCell>
-                        <TableCell>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                data-testid={`button-view-${task._id}`}
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setSelectedTask(task)}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
+                          {task.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {formatDateOnly(task.createdAt)}
+                      </TableCell>
+                      <TableCell>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              data-testid={`button-view-${task._id}`}
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedTask(task)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
                             {selectedTask && selectedTask._id === task._id && (
                               <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                                 <DialogHeader>
@@ -605,9 +607,10 @@ export default function TasksPanel() {
                           </Dialog>
                         </TableCell>
                       </TableRow>
-                    ))}
-                </div>
-              );
+                    );
+                  });
+              }
+              return rows;
             })
           )}
         </TableBody>
