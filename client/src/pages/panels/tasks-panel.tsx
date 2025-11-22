@@ -369,7 +369,7 @@ export default function TasksPanel() {
             groupedByUser.flatMap((group) => {
               const isExpanded = expandedUsers.has(group.userId);
               const rows: any[] = [
-                <TableRow key={`group-${group.userId}`} className="bg-blue-50 hover:bg-blue-100 cursor-pointer">
+                <TableRow key={`group-${group.userId}`} className="bg-blue-50 hover:bg-blue-100">
                   <TableCell className="w-8">
                     {group.tasks.length > 1 && (
                       <Button
@@ -386,7 +386,7 @@ export default function TasksPanel() {
                       </Button>
                     )}
                   </TableCell>
-                  <TableCell colSpan={7} className="font-semibold">
+                  <TableCell colSpan={7} className="font-semibold py-3">
                     {group.userName} ({group.tasks.length} {group.tasks.length === 1 ? 'task' : 'tasks'})
                   </TableCell>
                 </TableRow>,
