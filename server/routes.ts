@@ -7,6 +7,7 @@ import * as clientController from "./controllers/clientController";
 import * as leadController from "./controllers/leadController";
 import * as followUpController from "./controllers/followUpController";
 import * as reportController from "./controllers/reportController";
+import * as taskController from "./controllers/taskController";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes (public)
@@ -41,6 +42,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reports routes (protected)
   app.get("/api/reports/funnel", authenticateToken, reportController.getFunnelReport);
   app.get("/api/reports/followups/due", authenticateToken, reportController.getFollowUpsDueReport);
+
+  // Task routes (protected)
+  app.get("/api/tasks", authenticateToken, taskController.getTasks);
+  app.post("/api/tasks", authenticateToken, taskController.createTask);
+  app.put("/api/tasks/:taskId/status", authenticateToken, taskController.updateTaskStatus);
+  app.post("/api/tasks/:taskId/notes", authenticateToken, taskController.addNote);
+  app.delete("/api/tasks/:taskId", authenticateToken, taskController.deleteTask);
 
   const httpServer = createServer(app);
 

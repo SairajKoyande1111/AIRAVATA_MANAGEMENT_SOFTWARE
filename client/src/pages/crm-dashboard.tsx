@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import Sidebar from '@/components/sidebar';
 import AttendancePanel from './panels/attendance-panel';
+import TasksPanel from './panels/tasks-panel';
 import ClientsPanel from './panels/clients-panel';
 import LeadsPanel from './panels/leads-panel';
 import FollowupsPanel from './panels/followups-panel';
@@ -28,6 +29,8 @@ export default function CRMDashboard() {
     switch (activeSection) {
       case 'attendance':
         return <AttendancePanel />;
+      case 'tasks':
+        return <TasksPanel />;
       case 'clients':
         return <ClientsPanel />;
       case 'leads':
