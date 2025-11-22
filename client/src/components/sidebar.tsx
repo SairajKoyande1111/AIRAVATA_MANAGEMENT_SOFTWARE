@@ -25,10 +25,10 @@ export default function Sidebar({ activeSection, onSectionChange, onLogout }: Si
 
   return (
     <div className="w-64 border-r bg-background flex flex-col h-screen">
-      <div className="p-6 border-b">
+      <div className="py-3 px-6 border-b">
         <Link href="/dashboard">
-          <div className="mb-4 cursor-pointer flex justify-center">
-            <img src="/company-logo.png" alt="Company Logo" className="h-40 w-40 object-contain" data-testid="logo-sidebar" />
+          <div className="mb-2 cursor-pointer flex justify-center">
+            <img src="/company-logo.png" alt="Company Logo" className="h-48 w-48 object-contain" data-testid="logo-sidebar" />
           </div>
         </Link>
         <p className="text-lg font-bold text-gray-900">{user.name}</p>
