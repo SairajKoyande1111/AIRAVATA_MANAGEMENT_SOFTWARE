@@ -484,27 +484,6 @@ export default function ClientsPanel({ onNavigate, onEditMode }: ClientsPanelPro
                     </div>
                   )}
 
-                  {/* Follow-up Information */}
-                  {(client.nextFollowUpDate || client.nextAction) && (
-                    <div>
-                      <h4 className="font-semibold text-sm mb-2 text-gray-700">Follow-up & Next Steps</h4>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        {client.nextFollowUpDate && (
-                          <div>
-                            <span className="text-gray-600">Next Follow-up:</span>
-                            <p className="text-gray-900">{formatDate(client.nextFollowUpDate)}</p>
-                          </div>
-                        )}
-                        {client.nextAction && client.nextAction !== 'NA' && (
-                          <div>
-                            <span className="text-gray-600">Next Action:</span>
-                            <p className="text-gray-900">{client.nextAction}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
                   {/* Decision Maker */}
                   {client.decisionMaker && client.decisionMaker !== 'NA' && (
                     <div>

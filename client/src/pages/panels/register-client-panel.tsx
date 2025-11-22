@@ -634,38 +634,6 @@ export default function RegisterClientPanel({ isEditing: propsIsEditing = false,
               </div>
             </div>
 
-            {/* Follow-up & Next Steps */}
-            <div className="pt-0 pb-0">
-              <h3 className="text-sm font-semibold mb-3 text-gray-700">Follow-up & Next Steps</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nextFollowUpDate">Next Follow-up Date</Label>
-                  <Input
-                    id="nextFollowUpDate"
-                    data-testid="input-followup-date"
-                    type="date"
-                    value={formData.nextFollowUpDate}
-                    onChange={(e) => setFormData({ ...formData, nextFollowUpDate: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nextAction">Next Action</Label>
-                  <Select value={formData.nextAction} onValueChange={(value) => setFormData({ ...formData, nextAction: value })}>
-                    <SelectTrigger id="nextAction" data-testid="select-next-action">
-                      <SelectValue placeholder="Select action" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Prepare quotation">Prepare quotation</SelectItem>
-                      <SelectItem value="Prepare demo">Prepare demo</SelectItem>
-                      <SelectItem value="Send proposal">Send proposal</SelectItem>
-                      <SelectItem value="Follow-up call">Follow-up call</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
             <Button type="submit" data-testid="button-register-client" className="w-full mt-6">
               {isEditing ? 'Save Details' : 'Register Client'}
             </Button>
