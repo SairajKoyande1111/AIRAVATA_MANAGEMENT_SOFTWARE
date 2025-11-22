@@ -19,6 +19,10 @@ externalPort = 3000
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 36741
+externalPort = 3001
+
 [env]
 PORT = "5000"
 
@@ -51,4 +55,4 @@ mockupState = "FULLSTACK"
 [userenv.development]
 MONGODB_URI = "mongodb+srv://sairajkoyande_db_user:ZlMPZXgLkbVgPfqo@airavatatechnologies.uui4cw6.mongodb.net/?appName=AiravataTechnologies"
 JWT_SECRET = "company-management-jwt-secret-key-2024-secure"
-PORT = "3000"
+PORT = "5000"
