@@ -9,6 +9,7 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
     const tasks = await Task.find()
       .populate('assignedTo', 'email name')
       .populate('assignedBy', 'email name')
+      .populate('approvedBy', 'email name')
       .sort({ createdAt: -1 });
 
     res.json({ tasks });
@@ -43,6 +44,7 @@ export const createTask = async (req: AuthRequest, res: Response) => {
     await task.save();
     await task.populate('assignedTo', 'email name');
     await task.populate('assignedBy', 'email name');
+    await task.populate('approvedBy', 'email name');
 
     res.json({ message: 'Task created successfully', task });
   } catch (error) {
@@ -69,6 +71,7 @@ export const updateTaskStatus = async (req: AuthRequest, res: Response) => {
     await task.save();
     await task.populate('assignedTo', 'email name');
     await task.populate('assignedBy', 'email name');
+    await task.populate('approvedBy', 'email name');
 
     res.json({ message: 'Task status updated', task });
   } catch (error) {
@@ -99,6 +102,7 @@ export const addNote = async (req: AuthRequest, res: Response) => {
     await task.save();
     await task.populate('assignedTo', 'email name');
     await task.populate('assignedBy', 'email name');
+    await task.populate('approvedBy', 'email name');
 
     res.json({ message: 'Note added successfully', task });
   } catch (error) {
