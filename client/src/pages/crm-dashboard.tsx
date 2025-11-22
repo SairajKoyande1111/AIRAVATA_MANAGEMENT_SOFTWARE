@@ -52,12 +52,14 @@ export default function CRMDashboard() {
 
   return (
     <div className="flex h-screen bg-background">
-      <Sidebar
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-        onLogout={handleLogout}
-      />
-      <div className="flex-1 overflow-auto">
+      <div className="w-64 flex-shrink-0">
+        <Sidebar
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          onLogout={handleLogout}
+        />
+      </div>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
         {renderPanel()}
       </div>
     </div>
