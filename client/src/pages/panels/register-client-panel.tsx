@@ -251,55 +251,14 @@ export default function RegisterClientPanel({ editingClientId, onSave }: Registe
 
   return (
     <div className="p-8 w-full max-w-6xl mx-auto">
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">{isEditing ? 'Edit Client' : 'Register Client'}</h1>
-          <p className="text-muted-foreground">
-            {isEditing ? 'Update client information and requirements' : 'Add comprehensive client information and requirements'}
-          </p>
-        </div>
-        {isEditing && (
-          <Button
-            variant="outline"
-            onClick={() => {
-              localStorage.removeItem('editingClientData');
-              setIsEditing(false);
-              setFormData({
-                companyName: '',
-                clientName: '',
-                designation: '',
-                phone: '',
-                email: '',
-                companyAddress: '',
-                meetingDate: '',
-                meetingTime: '',
-                meetingLocation: '',
-                salesPersons: [],
-                meetingMode: '',
-                businessOverview: '',
-                industryType: '',
-                problems: [],
-                requirements: [],
-                technicalRequirements: [],
-                customNotes: '',
-                services: [],
-                expectedBudget: '',
-                projectTimeline: '',
-                decisionMaker: '',
-                urgencyLevel: 'Medium',
-                nextFollowUpDate: '',
-                nextAction: '',
-              });
-            }}
-          >
-            Cancel Edit
-          </Button>
-        )}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Register Client</h1>
+        <p className="text-muted-foreground">Add comprehensive client information and requirements</p>
       </div>
 
       <Card className="border-0 shadow-none rounded-0">
         <CardHeader className="px-0 pt-0 pb-4">
-          <CardTitle className="text-lg">{isEditing ? 'Edit Client Information' : 'New Client Registration'}</CardTitle>
+          <CardTitle className="text-lg">New Client Registration</CardTitle>
         </CardHeader>
         <CardContent className="px-0 pb-0">
           <form onSubmit={handleSubmit} className="space-y-5 pb-8">
@@ -704,7 +663,7 @@ export default function RegisterClientPanel({ editingClientId, onSave }: Registe
             </div>
 
             <Button type="submit" data-testid="button-register-client" className="w-full mt-6">
-              {isEditing ? 'Save Changes' : 'Register Client'}
+              Register Client
             </Button>
           </form>
         </CardContent>
