@@ -186,20 +186,20 @@ export default function RegisterClientPanel() {
   };
 
   return (
-    <div className="p-8 space-y-6 w-full max-w-6xl mx-auto">
-      <div>
+    <div className="p-8 w-full max-w-6xl mx-auto">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold">Register Client</h1>
         <p className="text-muted-foreground">Add comprehensive client information and requirements</p>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="border-0 shadow-none">
+        <CardHeader className="px-0 pt-0">
           <CardTitle>New Client Registration</CardTitle>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-8">
+        <CardContent className="px-0">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Client Information */}
-            <div>
+            <div className="mt-0">
               <h3 className="text-lg font-semibold mb-4">Basic Client Information</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -598,7 +598,7 @@ export default function RegisterClientPanel() {
               </div>
             </div>
 
-            <Button type="submit" data-testid="button-register-client" className="w-full">
+            <Button type="submit" data-testid="button-register-client" className="w-full mb-0">
               Register Client
             </Button>
           </form>
