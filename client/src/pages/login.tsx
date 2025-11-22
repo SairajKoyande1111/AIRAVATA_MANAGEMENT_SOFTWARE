@@ -38,7 +38,7 @@ export default function Login() {
         description: 'Logged in successfully',
       });
 
-      setLocation('/dashboard');
+      setLocation('/crm');
     } catch (error: any) {
       toast({
         title: 'Error',
