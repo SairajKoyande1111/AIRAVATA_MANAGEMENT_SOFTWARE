@@ -47,14 +47,13 @@ interface Lead {
     phone: string;
   };
   registeredDate: string;
-  assignedTo: string;
-  requirementType: string;
+  assignedTo: string[];
+  requirementType: string[];
   otherText?: string;
   requirementDetails: string[];
   priority: string;
   stage: string;
   serviceBudgets?: { [key: string]: number };
-  estimatedBudget?: number;
   nextFollowUp?: string;
   notes?: string;
   createdAt: string;
@@ -634,7 +633,7 @@ export default function LeadsPanel() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>
                     <div className="text-gray-600">Assigned To</div>
-                    <p className="text-gray-900 mt-1 font-medium">{lead.assignedTo}</p>
+                    <p className="text-gray-900 mt-1 font-medium">{Array.isArray(lead.assignedTo) ? lead.assignedTo.join(', ') : lead.assignedTo}</p>
                   </div>
                   <div>
                     <div className="text-gray-600">Lead Date</div>

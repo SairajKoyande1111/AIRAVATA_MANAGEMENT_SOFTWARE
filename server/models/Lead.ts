@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface ILead extends Document {
   clientId: mongoose.Types.ObjectId;
   registeredDate: Date;
-  assignedTo: mongoose.Types.ObjectId[];
+  assignedTo: string[];
   requirementType: string[];
   otherText?: string;
   requirementDetails: string[];
@@ -28,8 +28,7 @@ const LeadSchema = new Schema<ILead>(
       required: true,
     },
     assignedTo: {
-      type: [Schema.Types.ObjectId],
-      ref: 'User',
+      type: [String],
       required: true,
     },
     requirementType: {
