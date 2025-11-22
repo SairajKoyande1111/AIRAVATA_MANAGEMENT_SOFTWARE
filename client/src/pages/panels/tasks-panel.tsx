@@ -31,6 +31,7 @@ export default function TasksPanel() {
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(null);
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
@@ -313,234 +314,306 @@ export default function TasksPanel() {
   const groupedNotes = selectedTask ? groupNotesByDate(selectedTask.notes) : {};
   const dateKeys = Object.keys(groupedNotes).sort().reverse();
 
-  const TaskTable = ({ taskList }: { taskList: any[] }) => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Title</TableHead>
-          <TableHead>Description</TableHead>
-          <TableHead>Assigned To</TableHead>
-          <TableHead>Assigned By</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Created</TableHead>
-          <TableHead className="w-20">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {taskList.length === 0 ? (
+  const groupTasksByUser = (taskList: any[]) => {
+    const grouped: { [key: string]: any[] } = {};
+    taskList.forEach((task) => {
+      const userId = task.assignedTo._id;
+      const userName = task.assignedTo.name || task.assignedTo.email;
+      const key = `${userId}|${userName}`;
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      grouped[key].push(task);
+    });
+    return Object.entries(grouped).map(([key, tasks]) => {
+      const [userId, userName] = key.split('|');
+      return { userId, userName, tasks };
+    });
+  };
+
+  const toggleUserExpand = (userId: string) => {
+    const newExpanded = new Set(expandedUsers);
+    if (newExpanded.has(userId)) {
+      newExpanded.delete(userId);
+    } else {
+      newExpanded.add(userId);
+    }
+    setExpandedUsers(newExpanded);
+  };
+
+  const TaskTable = ({ taskList }: { taskList: any[] }) => {
+    const groupedByUser = groupTasksByUser(taskList);
+
+    return (
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableCell colSpan={7} className="text-center text-gray-500 py-8">
-              No tasks found
-            </TableCell>
+            <TableHead></TableHead>
+            <TableHead>Title</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Assigned To</TableHead>
+            <TableHead>Assigned By</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Created</TableHead>
+            <TableHead className="w-20">Actions</TableHead>
           </TableRow>
-        ) : (
-          taskList.map((task) => (
-            <TableRow key={task._id} data-testid={`row-task-${task._id}`} className="cursor-pointer hover:bg-gray-50">
-              <TableCell className="font-medium">{task.title}</TableCell>
-              <TableCell className="text-sm text-gray-600 max-w-xs truncate">{task.description}</TableCell>
-              <TableCell>
-                <span className="text-sm">{task.assignedTo.name || task.assignedTo.email}</span>
-              </TableCell>
-              <TableCell>
-                <span className="text-sm">{getAssignmentLabel(task)}</span>
-              </TableCell>
-              <TableCell>
-                <Badge
-                  data-testid={`badge-status-${task._id}`}
-                  className={getStatusColor(task.status)}
-                >
-                  {task.status}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-sm text-gray-500">
-                {formatDateOnly(task.createdAt)}
-              </TableCell>
-              <TableCell>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      data-testid={`button-view-${task._id}`}
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedTask(task)}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </DialogTrigger>
-                  {selectedTask && selectedTask._id === task._id && (
-                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>{selectedTask.title}</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-6">
-                        <div>
-                          <p className="text-sm text-gray-600">{selectedTask.description}</p>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-semibold text-gray-600">Assigned To</label>
-                            <p className="mt-1">{selectedTask.assignedTo.name || selectedTask.assignedTo.email}</p>
-                          </div>
-                          <div>
-                            <label className="text-xs font-semibold text-gray-600">Assigned By</label>
-                            <p className="mt-1">{getAssignmentLabel(selectedTask)}</p>
-                          </div>
-                        </div>
-
-                        {selectedTask.pauseReason && (
-                          <div className="bg-red-50 p-3 rounded border border-red-200">
-                            <p className="text-sm font-medium text-red-800">Pause Reason:</p>
-                            <p className="text-sm text-red-700">{selectedTask.pauseReason}</p>
-                          </div>
-                        )}
-
-                        <div className="border-t pt-4">
-                          <label className="text-sm font-semibold">Update Status</label>
-                          <div className="flex gap-2 mt-3 flex-wrap">
-                            {selectedTask.status === 'pending' && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleStatusChange(selectedTask._id, 'started')}
-                              >
-                                Start Task
-                              </Button>
-                            )}
-
-                            {selectedTask.status === 'started' && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleStatusChange(selectedTask._id, 'working')}
-                              >
-                                Mark Working
-                              </Button>
-                            )}
-
-                            <Select value={newStatus} onValueChange={setNewStatus}>
-                              <SelectTrigger className="w-40">
-                                <SelectValue placeholder="Change status" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {selectedTask.status !== 'pending' && <SelectItem value="started">Started</SelectItem>}
-                                <SelectItem value="working">Working</SelectItem>
-                                <SelectItem value="pause">Pause</SelectItem>
-                                <SelectItem value="completed">Completed</SelectItem>
-                              </SelectContent>
-                            </Select>
-
-                            {newStatus === 'pause' && (
-                              <Input
-                                placeholder="Reason for pause"
-                                value={pauseReason}
-                                onChange={(e) => setPauseReason(e.target.value)}
-                                className="flex-1"
-                              />
-                            )}
-
-                            {newStatus && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleStatusChange(selectedTask._id, newStatus)}
-                              >
-                                Update
-                              </Button>
-                            )}
-
-                            {canApprove(selectedTask) && (
-                              <Button
-                                size="sm"
-                                variant="default"
-                                className="bg-green-600 hover:bg-green-700"
-                                onClick={() => handleApproveTask(selectedTask._id)}
-                              >
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Approve Task
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="border-t pt-4">
-                          <h4 className="font-semibold mb-4">Daily Progress Notes</h4>
-                          {dateKeys.length > 0 ? (
-                            <div className="space-y-4 mb-6">
-                              {dateKeys.map((dateKey) => (
-                                <div
-                                  key={dateKey}
-                                  className="border rounded-lg p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition"
-                                  onClick={() =>
-                                    setSelectedDateFilter(
-                                      selectedDateFilter === dateKey ? null : dateKey
-                                    )
-                                  }
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <p className="font-medium text-sm">{dateKey}</p>
-                                    {selectedDateFilter === dateKey ? (
-                                      <ChevronUp className="w-4 h-4" />
-                                    ) : (
-                                      <ChevronDown className="w-4 h-4" />
-                                    )}
-                                  </div>
-
-                                  {selectedDateFilter === dateKey && (
-                                    <div className="mt-3 space-y-2 border-t pt-3">
-                                      {groupedNotes[dateKey].map((note: any, idx: number) => (
-                                        <div key={idx} className="text-sm whitespace-pre-wrap bg-white p-2 rounded">
-                                          {note.content}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-gray-500 mb-6">No notes yet</p>
-                          )}
-
-                          <div className="space-y-3">
-                            <label className="text-sm font-semibold">Add Note for Today</label>
-                            <Textarea
-                              placeholder="Add a note (use • for pointers)"
-                              value={newNote}
-                              onChange={(e) => setNewNote(e.target.value)}
-                              className="flex-1"
-                              rows={3}
-                            />
-                            <Button
-                              onClick={() => handleAddNote(selectedTask._id)}
-                            >
-                              Add Note
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2 justify-between pt-4 border-t">
-                          <Button
-                            variant="destructive"
-                            onClick={() => {
-                              handleDeleteTask(selectedTask._id);
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete Task
-                          </Button>
-                          <DialogClose asChild>
-                            <Button variant="outline">Close</Button>
-                          </DialogClose>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  )}
-                </Dialog>
+        </TableHeader>
+        <TableBody>
+          {groupedByUser.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} className="text-center text-gray-500 py-8">
+                No tasks found
               </TableCell>
             </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
-  );
+          ) : (
+            groupedByUser.map((group) => {
+              const isExpanded = expandedUsers.has(group.userId);
+              return (
+                <div key={group.userId}>
+                  <TableRow className="hover:bg-gray-50 cursor-pointer">
+                    <TableCell className="w-8">
+                      {group.tasks.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleUserExpand(group.userId)}
+                          className="h-6 w-6 p-0"
+                        >
+                          {isExpanded ? (
+                            <ChevronUp className="w-4 h-4" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4" />
+                          )}
+                        </Button>
+                      )}
+                    </TableCell>
+                    <TableCell colSpan={7} className="font-semibold">
+                      {group.userName} ({group.tasks.length} {group.tasks.length === 1 ? 'task' : 'tasks'})
+                    </TableCell>
+                  </TableRow>
+                  {(isExpanded || group.tasks.length === 1) &&
+                    group.tasks.map((task) => (
+                      <TableRow key={task._id} data-testid={`row-task-${task._id}`} className="hover:bg-gray-50">
+                        <TableCell></TableCell>
+                        <TableCell className="font-medium">{task.title}</TableCell>
+                        <TableCell className="text-sm text-gray-600 max-w-xs truncate">{task.description}</TableCell>
+                        <TableCell>
+                          <span className="text-sm">{task.assignedTo.name || task.assignedTo.email}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm">{getAssignmentLabel(task)}</span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            data-testid={`badge-status-${task._id}`}
+                            className={getStatusColor(task.status)}
+                          >
+                            {task.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-500">
+                          {formatDateOnly(task.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                data-testid={`button-view-${task._id}`}
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedTask(task)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            {selectedTask && selectedTask._id === task._id && (
+                              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle>{selectedTask.title}</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-6">
+                                  <div>
+                                    <p className="text-sm text-gray-600">{selectedTask.description}</p>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="text-xs font-semibold text-gray-600">Assigned To</label>
+                                      <p className="mt-1">{selectedTask.assignedTo.name || selectedTask.assignedTo.email}</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-xs font-semibold text-gray-600">Assigned By</label>
+                                      <p className="mt-1">{getAssignmentLabel(selectedTask)}</p>
+                                    </div>
+                                  </div>
+
+                                  {selectedTask.isApproved && selectedTask.approvedBy && (
+                                    <div className="bg-green-50 p-3 rounded border border-green-200">
+                                      <p className="text-sm font-medium text-green-800">Approved By:</p>
+                                      <p className="text-sm text-green-700">{selectedTask.approvedBy.name || selectedTask.approvedBy.email}</p>
+                                      <p className="text-xs text-green-600 mt-1">{formatDate(selectedTask.approvedAt)}</p>
+                                    </div>
+                                  )}
+
+                                  {selectedTask.pauseReason && (
+                                    <div className="bg-red-50 p-3 rounded border border-red-200">
+                                      <p className="text-sm font-medium text-red-800">Pause Reason:</p>
+                                      <p className="text-sm text-red-700">{selectedTask.pauseReason}</p>
+                                    </div>
+                                  )}
+
+                                  {selectedTask.status !== 'approved' && (
+                                    <div className="border-t pt-4">
+                                      <label className="text-sm font-semibold">Update Status</label>
+                                      <div className="flex gap-2 mt-3 flex-wrap">
+                                        {selectedTask.status === 'pending' && (
+                                          <Button
+                                            size="sm"
+                                            onClick={() => handleStatusChange(selectedTask._id, 'started')}
+                                          >
+                                            Start Task
+                                          </Button>
+                                        )}
+
+                                        {selectedTask.status === 'started' && (
+                                          <Button
+                                            size="sm"
+                                            onClick={() => handleStatusChange(selectedTask._id, 'working')}
+                                          >
+                                            Mark Working
+                                          </Button>
+                                        )}
+
+                                        <Select value={newStatus} onValueChange={setNewStatus}>
+                                          <SelectTrigger className="w-40">
+                                            <SelectValue placeholder="Change status" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {selectedTask.status !== 'pending' && <SelectItem value="started">Started</SelectItem>}
+                                            <SelectItem value="working">Working</SelectItem>
+                                            <SelectItem value="pause">Pause</SelectItem>
+                                            <SelectItem value="completed">Completed</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+
+                                        {newStatus === 'pause' && (
+                                          <Input
+                                            placeholder="Reason for pause"
+                                            value={pauseReason}
+                                            onChange={(e) => setPauseReason(e.target.value)}
+                                            className="flex-1"
+                                          />
+                                        )}
+
+                                        {newStatus && (
+                                          <Button
+                                            size="sm"
+                                            onClick={() => handleStatusChange(selectedTask._id, newStatus)}
+                                          >
+                                            Update
+                                          </Button>
+                                        )}
+
+                                        {canApprove(selectedTask) && (
+                                          <Button
+                                            size="sm"
+                                            variant="default"
+                                            className="bg-green-600 hover:bg-green-700"
+                                            onClick={() => handleApproveTask(selectedTask._id)}
+                                          >
+                                            <CheckCircle className="w-4 h-4 mr-2" />
+                                            Approve Task
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  <div className="border-t pt-4">
+                                    <h4 className="font-semibold mb-4">Daily Progress Notes</h4>
+                                    {dateKeys.length > 0 ? (
+                                      <div className="space-y-4 mb-6">
+                                        {dateKeys.map((dateKey) => (
+                                          <div
+                                            key={dateKey}
+                                            className="border rounded-lg p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition"
+                                            onClick={() =>
+                                              setSelectedDateFilter(
+                                                selectedDateFilter === dateKey ? null : dateKey
+                                              )
+                                            }
+                                          >
+                                            <div className="flex items-center justify-between">
+                                              <p className="font-medium text-sm">{dateKey}</p>
+                                              {selectedDateFilter === dateKey ? (
+                                                <ChevronUp className="w-4 h-4" />
+                                              ) : (
+                                                <ChevronDown className="w-4 h-4" />
+                                              )}
+                                            </div>
+
+                                            {selectedDateFilter === dateKey && (
+                                              <div className="mt-3 space-y-2 border-t pt-3">
+                                                {groupedNotes[dateKey].map((note: any, idx: number) => (
+                                                  <div key={idx} className="text-sm whitespace-pre-wrap bg-white p-2 rounded">
+                                                    {note.content}
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <p className="text-sm text-gray-500 mb-6">No notes yet</p>
+                                    )}
+
+                                    <div className="space-y-3">
+                                      <label className="text-sm font-semibold">Add Note for Today</label>
+                                      <Textarea
+                                        placeholder="Add a note (use • for pointers)"
+                                        value={newNote}
+                                        onChange={(e) => setNewNote(e.target.value)}
+                                        className="flex-1"
+                                        rows={3}
+                                      />
+                                      <Button
+                                        onClick={() => handleAddNote(selectedTask._id)}
+                                      >
+                                        Add Note
+                                      </Button>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex gap-2 justify-between pt-4 border-t">
+                                    <Button
+                                      variant="destructive"
+                                      onClick={() => {
+                                        handleDeleteTask(selectedTask._id);
+                                      }}
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Delete Task
+                                    </Button>
+                                    <DialogClose asChild>
+                                      <Button variant="outline">Close</Button>
+                                    </DialogClose>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            )}
+                          </Dialog>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </div>
+              );
+            })
+          )}
+        </TableBody>
+      </Table>
+    );
+  };
 
   return (
     <div className="p-8 space-y-6">
