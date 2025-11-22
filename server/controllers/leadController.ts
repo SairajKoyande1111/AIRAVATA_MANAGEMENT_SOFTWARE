@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import Lead from '../models/Lead';
+import User from '../models/User';
 
 export const createLead = async (req: AuthRequest, res: Response) => {
   try {
@@ -13,7 +14,7 @@ export const createLead = async (req: AuthRequest, res: Response) => {
       requirementDetails,
       priority,
       stage,
-      estimatedBudget,
+      serviceBudgets,
       nextFollowUp,
       notes,
     } = req.body;
@@ -26,16 +27,31 @@ export const createLead = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'otherText is required when requirementType is Other' });
     }
 
+    // Convert user names to ObjectIds
+    const userIds: any[] = [];
+    if (Array.isArray(assignedTo)) {
+      for (const userName of assignedTo) {
+        const user = await User.findOne({ name: userName });
+        if (user) {
+          userIds.push(user._id);
+        }
+      }
+    }
+
+    if (userIds.length === 0) {
+      return res.status(400).json({ error: 'No valid users found for assignedTo' });
+    }
+
     const lead = new Lead({
       clientId,
       registeredDate,
-      assignedTo,
+      assignedTo: userIds,
       requirementType,
       otherText,
       requirementDetails: requirementDetails || [],
       priority: priority || 'medium',
       stage: stage || 'new',
-      estimatedBudget,
+      serviceBudgets: serviceBudgets || {},
       nextFollowUp,
       notes,
     });
