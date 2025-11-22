@@ -268,7 +268,7 @@ export default function TasksPanel() {
                   <SelectContent>
                     {FIXED_USERS.map((user) => (
                       <SelectItem key={user.id} value={user.id}>
-                        {user.name}
+                        {user.id === currentUser.id ? 'Self' : user.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
