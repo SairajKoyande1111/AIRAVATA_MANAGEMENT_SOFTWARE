@@ -171,9 +171,9 @@ export default function HistoryPanel() {
       {!loading && Object.keys(archives).length > 0 && (
         <Card className="bg-gray-50">
           <CardContent className="pt-6">
-            <div className="space-y-4">
+            <div className="flex items-center gap-4">
               {/* Search Bar */}
-              <div className="relative">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                 <Input
                   placeholder="Search by task title, description, or assignee..."
