@@ -22,15 +22,16 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Phone, MapPin, Building, Calendar, User, Briefcase, ChevronDown, ChevronUp, Edit, Trash2, Eye } from 'lucide-react';
+import { Mail, Phone, MapPin, Building, Calendar, User, Briefcase, ChevronDown, ChevronUp, Edit, Trash2, Eye, Plus } from 'lucide-react';
 
 interface ClientsPanelProps {
-  onNavigate?: (section: string) => void;
+  onNavigate?: (section: string, clientId?: string) => void;
   onEditMode?: (isEditing: boolean) => void;
 }
 
 export default function ClientsPanel({ onNavigate, onEditMode }: ClientsPanelProps) {
   const [clients, setClients] = useState<any[]>([]);
+  const [leads, setLeads] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
@@ -39,7 +40,21 @@ export default function ClientsPanel({ onNavigate, onEditMode }: ClientsPanelPro
 
   useEffect(() => {
     fetchClients();
+    fetchLeads();
   }, []);
+
+  const fetchLeads = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch('/api/leads', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      setLeads(data.leads || []);
+    } catch (error) {
+      console.error('Failed to fetch leads');
+    }
+  };
 
   const fetchClients = async () => {
     const token = localStorage.getItem('token');
@@ -387,6 +402,48 @@ export default function ClientsPanel({ onNavigate, onEditMode }: ClientsPanelPro
                       </div>
                     </div>
                   )}
+
+                  {/* Associated Leads */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-sm text-gray-700">Associated Leads</h4>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          localStorage.setItem('selectedClientForLead', JSON.stringify(client));
+                          if (onNavigate) {
+                            onNavigate('leads', client._id);
+                          }
+                        }}
+                        data-testid={`button-create-lead-from-client-${client._id}`}
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Create Lead
+                      </Button>
+                    </div>
+                    {leads.filter((lead: any) => lead.clientId?._id === client._id).length === 0 ? (
+                      <p className="text-sm text-gray-600 py-2">No leads created yet for this client.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {leads
+                          .filter((lead: any) => lead.clientId?._id === client._id)
+                          .map((lead: any) => (
+                            <div key={lead._id} className="p-2 bg-gray-50 rounded text-sm">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-medium text-gray-900">{lead.requirementType}</p>
+                                  <p className="text-gray-600">Stage: {lead.stage} | Priority: {lead.priority}</p>
+                                </div>
+                                <Badge variant="secondary" className="text-xs">
+                                  {lead.stage}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Budget & Timeline */}
                   {(client.expectedBudget || client.projectTimeline || client.urgencyLevel) && (

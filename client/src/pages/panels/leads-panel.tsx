@@ -77,7 +77,7 @@ export default function LeadsPanel() {
     assignedTo: '',
     requirementType: '',
     otherText: '',
-    requirementDetails: '' as any,
+    requirementDetails: [] as string[],
     priority: 'medium',
     stage: 'new',
     estimatedBudget: '',
@@ -88,6 +88,19 @@ export default function LeadsPanel() {
   useEffect(() => {
     fetchLeads();
     fetchClients();
+    
+    // Check if there's a pre-selected client from the Clients panel
+    const selectedClient = localStorage.getItem('selectedClientForLead');
+    if (selectedClient) {
+      try {
+        const client = JSON.parse(selectedClient);
+        setFormData((prev) => ({ ...prev, clientId: client._id }));
+        setCreateDialogOpen(true);
+        localStorage.removeItem('selectedClientForLead');
+      } catch (error) {
+        console.error('Failed to parse selected client');
+      }
+    }
   }, []);
 
   const fetchLeads = async () => {
@@ -142,7 +155,7 @@ export default function LeadsPanel() {
         body: JSON.stringify({
           ...formData,
           requirementDetails: typeof formData.requirementDetails === 'string' 
-            ? formData.requirementDetails.split('\n').filter(r => r.trim())
+            ? formData.requirementDetails.split('\n').filter((r: string) => r.trim())
             : formData.requirementDetails,
           estimatedBudget: formData.estimatedBudget ? parseInt(formData.estimatedBudget) : null,
         }),
@@ -690,8 +703,8 @@ export default function LeadsPanel() {
                 <Label htmlFor="edit-requirements">Requirements</Label>
                 <Textarea
                   id="edit-requirements"
-                  value={typeof editingLead.requirementDetails === 'string' ? editingLead.requirementDetails : editingLead.requirementDetails.join('\n')}
-                  onChange={(e) => setEditingLead({ ...editingLead, requirementDetails: e.target.value })}
+                  value={Array.isArray(editingLead.requirementDetails) ? editingLead.requirementDetails.join('\n') : editingLead.requirementDetails}
+                  onChange={(e) => setEditingLead({ ...editingLead, requirementDetails: e.target.value as any })}
                   placeholder="One requirement per line"
                   data-testid="textarea-edit-requirements"
                   className="h-24"
