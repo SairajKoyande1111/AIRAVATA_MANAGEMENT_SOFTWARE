@@ -186,7 +186,7 @@ export default function RegisterClientPanel() {
   };
 
   return (
-    <div className="p-8 space-y-6 max-w-6xl mx-auto overflow-y-auto">
+    <div className="p-8 space-y-6 w-full max-w-6xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold">Register Client</h1>
         <p className="text-muted-foreground">Add comprehensive client information and requirements</p>
