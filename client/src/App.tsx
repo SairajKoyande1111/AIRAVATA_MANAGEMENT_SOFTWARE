@@ -6,16 +6,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
-import Attendance from "@/pages/attendance";
-import Clients from "@/pages/clients";
+import CRMDashboard from "@/pages/crm-dashboard";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Login} />
       <Route path="/dashboard" component={Dashboard} />
-      <Route path="/attendance" component={Attendance} />
-      <Route path="/clients" component={Clients} />
+      <Route path="/crm" component={CRMDashboard} />
       <Route component={NotFound} />
     </Switch>
   );

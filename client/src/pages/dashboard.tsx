@@ -81,19 +81,17 @@ export default function Dashboard() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {menuItems.map((item) => (
-            <Link key={item.href} href={item.href}>
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow" data-testid={`card-${item.title.toLowerCase()}`}>
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <item.icon className={`w-8 h-8 ${item.color}`} />
-                    <CardTitle>{item.title}</CardTitle>
-                  </div>
-                  <CardDescription>{item.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            </Link>
-          ))}
+          <Link href="/crm">
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-primary text-primary-foreground" data-testid="card-crm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <span>→</span>
+                  Go to CRM
+                </CardTitle>
+                <CardDescription className="text-primary-foreground/70">Access the full management system</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
         </div>
       </main>
     </div>
