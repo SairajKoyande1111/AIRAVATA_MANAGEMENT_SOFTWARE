@@ -2,21 +2,15 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Mail, Phone, MapPin, Building } from 'lucide-react';
+import { Mail, Phone, MapPin, Building, Calendar, User, Briefcase, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function ClientsPanel() {
   const [clients, setClients] = useState<any[]>([]);
-  const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    businessType: '',
-    location: '',
-  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [expandedClient, setExpandedClient] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -33,160 +27,373 @@ export default function ClientsPanel() {
       setClients(data.clients || []);
     } catch (error) {
       console.error('Failed to fetch clients');
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-
-    try {
-      const response = await fetch('/api/clients', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create client');
-      }
-
-      toast({
-        title: 'Success',
-        description: 'Client created successfully',
-      });
-
-      setOpen(false);
-      setFormData({ name: '', phone: '', email: '', businessType: '', location: '' });
-      fetchClients();
-    } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message,
+        description: 'Failed to fetch clients',
         variant: 'destructive',
       });
     }
   };
 
+  const filteredClients = clients.filter((client) => {
+    const matchesSearch = 
+      client.companyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!selectedDate) return matchesSearch;
+
+    const clientDate = new Date(client.createdAt).toLocaleDateString('en-IN');
+    return matchesSearch && clientDate === selectedDate;
+  });
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'NA';
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  };
+
   return (
     <div className="p-8 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Clients</h1>
-          <p className="text-muted-foreground">Manage client information and contacts</p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-add-client">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Client
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Client</DialogTitle>
-              <DialogDescription>Enter client information</DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  data-testid="input-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  data-testid="input-phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  data-testid="input-email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="businessType">Business Type</Label>
-                <Input
-                  id="businessType"
-                  data-testid="input-business"
-                  value={formData.businessType}
-                  onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  data-testid="input-location"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  required
-                />
-              </div>
-              <Button type="submit" data-testid="button-submit" className="w-full">
-                Create Client
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+      <div>
+        <h1 className="text-3xl font-bold">Clients</h1>
+        <p className="text-muted-foreground">View and manage all registered clients</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {clients.map((client) => (
-          <Card key={client._id} data-testid={`card-client-${client._id}`}>
-            <CardHeader>
-              <CardTitle>{client.name}</CardTitle>
-              <CardDescription className="flex items-center gap-1">
-                <Building className="w-3 h-3" />
-                {client.businessType}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Mail className="w-4 h-4 text-muted-foreground" />
-                <span>{client.email}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Phone className="w-4 h-4 text-muted-foreground" />
-                <span>{client.phone}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <MapPin className="w-4 h-4 text-muted-foreground" />
-                <span>{client.location}</span>
-              </div>
+      {/* Search and Filter Section */}
+      <div className="bg-white rounded-lg border p-4 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Search by Company/Client Name</label>
+            <Input
+              placeholder="Search by company name, client name, or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              data-testid="input-search-clients"
+              className="w-full"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Filter by Registration Date</label>
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => {
+                if (e.target.value) {
+                  const date = new Date(e.target.value);
+                  const formatted = date.toLocaleDateString('en-IN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                  setSelectedDate(formatted);
+                } else {
+                  setSelectedDate('');
+                }
+              }}
+              data-testid="input-filter-date"
+              className="w-full"
+            />
+          </div>
+          <div className="flex items-end">
+            {(searchTerm || selectedDate) && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedDate('');
+                }}
+                data-testid="button-clear-filters"
+                className="w-full"
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Clients Grid */}
+      <div className="space-y-4">
+        {filteredClients.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-muted-foreground">
+                {clients.length === 0
+                  ? 'No clients registered yet. Go to "Register Client" to add your first client.'
+                  : 'No clients match your search criteria.'}
+              </p>
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          filteredClients.map((client) => (
+            <Card key={client._id} data-testid={`card-client-${client._id}`} className="overflow-hidden">
+              <CardHeader
+                className="pb-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => setExpandedClient(expandedClient === client._id ? null : client._id)}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-xl">{client.companyName}</CardTitle>
+                      {client.services && client.services.length > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          {client.services.length} service{client.services.length !== 1 ? 's' : ''}
+                        </Badge>
+                      )}
+                    </div>
+                    <CardDescription className="mt-2">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        {client.clientName} {client.designation && `- ${client.designation}`}
+                      </div>
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-500">
+                    {expandedClient === client._id ? (
+                      <ChevronUp className="w-5 h-5" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5" />
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+
+              {/* Summary Row */}
+              <CardContent className="pb-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <div className="flex items-center gap-1 text-gray-600">
+                      <Mail className="w-4 h-4" />
+                      Email
+                    </div>
+                    <p className="text-gray-900 mt-1 truncate">{client.email}</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1 text-gray-600">
+                      <Phone className="w-4 h-4" />
+                      Phone
+                    </div>
+                    <p className="text-gray-900 mt-1">{client.phone}</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1 text-gray-600">
+                      <Building className="w-4 h-4" />
+                      Industry
+                    </div>
+                    <p className="text-gray-900 mt-1">{client.industryType || 'NA'}</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1 text-gray-600">
+                      <Calendar className="w-4 h-4" />
+                      Registered
+                    </div>
+                    <p className="text-gray-900 mt-1 text-xs">{formatDate(client.createdAt)}</p>
+                  </div>
+                </div>
+              </CardContent>
+
+              {/* Expandable Details */}
+              {expandedClient === client._id && (
+                <CardContent className="pt-0 border-t space-y-4">
+                  {/* Basic Information */}
+                  <div>
+                    <h4 className="font-semibold text-sm mb-2 text-gray-700">Basic Information</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600">Company Address:</span>
+                        <p className="text-gray-900">{client.companyAddress || 'NA'}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Business Overview:</span>
+                        <p className="text-gray-900">{client.businessOverview || 'NA'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Meeting Information */}
+                  {(client.meetingDate || client.meetingMode) && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2 text-gray-700">Meeting Information</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        {client.meetingDate && (
+                          <div>
+                            <span className="text-gray-600">Meeting Date:</span>
+                            <p className="text-gray-900">{formatDate(client.meetingDate)}</p>
+                          </div>
+                        )}
+                        {client.meetingTime && client.meetingTime !== 'NA' && (
+                          <div>
+                            <span className="text-gray-600">Meeting Time:</span>
+                            <p className="text-gray-900">{client.meetingTime}</p>
+                          </div>
+                        )}
+                        {client.meetingLocation && client.meetingLocation !== 'NA' && (
+                          <div>
+                            <span className="text-gray-600">Location:</span>
+                            <p className="text-gray-900">{client.meetingLocation}</p>
+                          </div>
+                        )}
+                        {client.meetingMode && client.meetingMode !== 'NA' && (
+                          <div>
+                            <span className="text-gray-600">Mode:</span>
+                            <p className="text-gray-900">{client.meetingMode}</p>
+                          </div>
+                        )}
+                        {client.salesPersons && client.salesPersons.length > 0 && (
+                          <div className="col-span-2">
+                            <span className="text-gray-600">Sales/BD Person:</span>
+                            <p className="text-gray-900">{client.salesPersons.join(', ')}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Services Required */}
+                  {client.services && client.services.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2 text-gray-700">Services Required</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {client.services.map((service: string) => (
+                          <Badge key={service} variant="outline">
+                            {service === 'WEBSITE' && 'Website Development'}
+                            {service === 'MOBILE APP' && 'Mobile App Development'}
+                            {service === 'CUSTOM SOFTWARE' && 'Custom Software Solution'}
+                            {service === 'DIGITAL MARKETING' && 'Digital Marketing'}
+                            {service === 'OTHERS' && 'Others'}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Client Requirements */}
+                  {((client.problems && client.problems.length > 0) ||
+                    (client.requirements && client.requirements.length > 0) ||
+                    (client.technicalRequirements && client.technicalRequirements.length > 0)) && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2 text-gray-700">Client Requirements</h4>
+                      <div className="space-y-2 text-sm">
+                        {client.problems && client.problems.length > 0 && (
+                          <div>
+                            <span className="text-gray-600">Problems Facing:</span>
+                            <ul className="list-disc list-inside text-gray-900">
+                              {client.problems.map((problem: string, idx: number) => (
+                                <li key={idx}>{problem}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {client.requirements && client.requirements.length > 0 && (
+                          <div>
+                            <span className="text-gray-600">Requirements:</span>
+                            <ul className="list-disc list-inside text-gray-900">
+                              {client.requirements.map((req: string, idx: number) => (
+                                <li key={idx}>{req}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {client.technicalRequirements && client.technicalRequirements.length > 0 && (
+                          <div>
+                            <span className="text-gray-600">Technical Requirements:</span>
+                            <ul className="list-disc list-inside text-gray-900">
+                              {client.technicalRequirements.map((tech: string, idx: number) => (
+                                <li key={idx}>{tech}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Budget & Timeline */}
+                  {(client.expectedBudget || client.projectTimeline || client.urgencyLevel) && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2 text-gray-700">Budget & Timeline</h4>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        {client.expectedBudget && client.expectedBudget !== 'NA' && (
+                          <div>
+                            <span className="text-gray-600">Budget:</span>
+                            <p className="text-gray-900">{client.expectedBudget}</p>
+                          </div>
+                        )}
+                        {client.projectTimeline && client.projectTimeline !== 'NA' && (
+                          <div>
+                            <span className="text-gray-600">Timeline:</span>
+                            <p className="text-gray-900">{client.projectTimeline}</p>
+                          </div>
+                        )}
+                        {client.urgencyLevel && (
+                          <div>
+                            <span className="text-gray-600">Urgency:</span>
+                            <p className="text-gray-900">
+                              <Badge
+                                variant={
+                                  client.urgencyLevel === 'High'
+                                    ? 'destructive'
+                                    : client.urgencyLevel === 'Medium'
+                                      ? 'secondary'
+                                      : 'outline'
+                                }
+                              >
+                                {client.urgencyLevel}
+                              </Badge>
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Follow-up Information */}
+                  {(client.nextFollowUpDate || client.nextAction) && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2 text-gray-700">Follow-up & Next Steps</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        {client.nextFollowUpDate && (
+                          <div>
+                            <span className="text-gray-600">Next Follow-up:</span>
+                            <p className="text-gray-900">{formatDate(client.nextFollowUpDate)}</p>
+                          </div>
+                        )}
+                        {client.nextAction && client.nextAction !== 'NA' && (
+                          <div>
+                            <span className="text-gray-600">Next Action:</span>
+                            <p className="text-gray-900">{client.nextAction}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Decision Maker */}
+                  {client.decisionMaker && client.decisionMaker !== 'NA' && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2 text-gray-700">Decision Maker</h4>
+                      <p className="text-gray-900 text-sm">{client.decisionMaker}</p>
+                    </div>
+                  )}
+
+                  {/* Custom Notes */}
+                  {client.customNotes && client.customNotes !== 'NA' && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2 text-gray-700">Notes</h4>
+                      <p className="text-gray-900 text-sm">{client.customNotes}</p>
+                    </div>
+                  )}
+                </CardContent>
+              )}
+            </Card>
+          ))
+        )}
       </div>
 
-      {clients.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">No clients yet. Add your first client to get started.</p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Summary */}
+      <div className="text-sm text-muted-foreground">
+        Showing {filteredClients.length} of {clients.length} clients
+      </div>
     </div>
   );
 }
