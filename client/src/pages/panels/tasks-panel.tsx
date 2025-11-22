@@ -501,7 +501,7 @@ export default function TasksPanel() {
                                           }}
                                         >
                                           <SelectTrigger className="mt-2">
-                                            <SelectValue />
+                                            <SelectValue placeholder={selectedTask.status} />
                                           </SelectTrigger>
                                           <SelectContent>
                                             <SelectItem value="pending">Pending</SelectItem>
