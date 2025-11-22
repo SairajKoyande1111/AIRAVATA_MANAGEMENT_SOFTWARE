@@ -27,9 +27,11 @@ export default function Sidebar({ activeSection, onSectionChange, onLogout }: Si
     <div className="w-64 border-r bg-background flex flex-col h-screen">
       <div className="p-6 border-b">
         <Link href="/dashboard">
-          <h2 className="text-xl font-bold cursor-pointer hover:text-primary">Company</h2>
+          <div className="mb-3 cursor-pointer">
+            <img src="/company-logo.png" alt="Company Logo" className="h-12 object-contain" data-testid="logo-sidebar" />
+          </div>
         </Link>
-        <p className="text-xs text-muted-foreground mt-1">{user.name}</p>
+        <p className="text-lg font-bold text-gray-900">{user.name}</p>
       </div>
 
       <nav className="flex-1 overflow-y-auto p-4 space-y-2">
