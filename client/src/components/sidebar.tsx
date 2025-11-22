@@ -27,7 +27,7 @@ export default function Sidebar({ activeSection, onSectionChange, onLogout }: Si
     <div className="w-64 border-r bg-background flex flex-col h-screen">
       <div className="py-3 px-6 border-b">
         <Link href="/dashboard">
-          <div className="mb-2 cursor-pointer flex justify-center">
+          <div className="cursor-pointer flex justify-center">
             <img src="/company-logo.png" alt="Company Logo" className="h-48 w-48 object-contain" data-testid="logo-sidebar" />
           </div>
         </Link>
