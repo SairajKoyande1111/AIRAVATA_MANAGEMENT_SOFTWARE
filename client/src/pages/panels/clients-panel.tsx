@@ -185,7 +185,7 @@ export default function ClientsPanel() {
           filteredClients.map((client) => (
             <Card key={client._id} data-testid={`card-client-${client._id}`} className="overflow-hidden">
               <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <CardTitle className="text-xl">{client.companyName}</CardTitle>
@@ -202,6 +202,7 @@ export default function ClientsPanel() {
                       </div>
                     </CardDescription>
                   </div>
+                  <div className="flex gap-2 flex-shrink-0">
                     <Button
                       size="sm"
                       variant="outline"
