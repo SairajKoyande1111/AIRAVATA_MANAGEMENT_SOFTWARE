@@ -140,9 +140,18 @@ export default function TasksPanel() {
         throw new Error(error.error || 'Failed to update task');
       }
 
+      const updatedTask = await response.json();
       toast({ description: 'Task status updated' });
+      
+      // Update selectedTask immediately to keep dialog open
+      if (selectedTask && selectedTask._id === taskId) {
+        setSelectedTask(updatedTask.task);
+      }
+      
       setPauseReason('');
       setNewStatus('');
+      
+      // Fetch tasks in background
       fetchTasks();
     } catch (error) {
       toast({ description: String(error), variant: 'destructive' });
@@ -192,13 +201,17 @@ export default function TasksPanel() {
         body: JSON.stringify({ content: newNote }),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to add note');
+      if (!response.ok) throw new Error('Failed to add note');
+      
+      const updatedTask = await response.json();
+      
+      // Update selectedTask immediately to keep dialog open
+      if (selectedTask && selectedTask._id === taskId) {
+        setSelectedTask(updatedTask.task);
       }
-
-      toast({ description: 'Note added successfully' });
+      
       setNewNote('');
+      toast({ description: 'Note added successfully' });
       fetchTasks();
     } catch (error) {
       toast({ description: String(error), variant: 'destructive' });
