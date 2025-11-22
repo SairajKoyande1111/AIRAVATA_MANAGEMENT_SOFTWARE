@@ -271,14 +271,17 @@ export default function AttendancePanel() {
             </TableHeader>
             <TableBody>
               {allAttendance.length > 0 ? (
-                allAttendance.map((attendance) => {
+                allAttendance.filter(a => a.userId).map((attendance) => {
                   const status = getStatus(attendance);
                   const workTime = calculateWorkTime(attendance);
+                  const userId = typeof attendance.userId === 'object' ? attendance.userId._id : attendance.userId;
+                  const userName = typeof attendance.userId === 'object' ? attendance.userId.name : 'Unknown';
+                  
                   return (
-                    <TableRow key={attendance._id} data-testid={`row-attendance-${attendance.userId._id}`}>
+                    <TableRow key={attendance._id} data-testid={`row-attendance-${userId}`}>
                       <TableCell className="font-medium">
-                        {attendance.userId.name}
-                        {attendance.userId._id === currentUser.id && (
+                        {userName}
+                        {userId === currentUser.id && (
                           <span className="ml-2 text-xs text-muted-foreground">(You)</span>
                         )}
                       </TableCell>
