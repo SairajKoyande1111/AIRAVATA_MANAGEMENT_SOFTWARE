@@ -193,24 +193,28 @@ export default function HistoryPanel() {
                 )}
               </div>
 
-              {/* Date Filter */}
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-gray-600" />
-                <Input
+              {/* Date Filter - Calendar Icon Button */}
+              <div className="flex items-center gap-2">
+                <input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-48"
+                  className="hidden"
+                  id="date-filter-input"
                   data-testid="input-date-filter"
                 />
+                <label
+                  htmlFor="date-filter-input"
+                  className="cursor-pointer p-2 rounded hover:bg-gray-200 transition-colors"
+                  title={selectedDate ? `Filtering by ${selectedDate}` : 'Click to filter by date'}
+                  data-testid="button-date-filter"
+                >
+                  <Calendar className={`w-5 h-5 ${selectedDate ? 'text-blue-600' : 'text-gray-600'}`} />
+                </label>
                 {selectedDate && (
-                  <button
-                    onClick={() => setSelectedDate('')}
-                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                    data-testid="button-clear-date"
-                  >
-                    Clear
-                  </button>
+                  <span className="text-xs text-gray-600 bg-blue-50 px-2 py-1 rounded">
+                    {new Date(selectedDate).toLocaleDateString('en-IN')}
+                  </span>
                 )}
               </div>
             </div>
