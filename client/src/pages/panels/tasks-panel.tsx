@@ -473,69 +473,61 @@ export default function TasksPanel() {
                                   )}
 
                                   {selectedTask.status !== 'approved' && (
-                                    <div className="border-t pt-4">
-                                      <label className="text-sm font-semibold">Update Status</label>
-                                      <div className="flex gap-2 mt-3 flex-wrap">
-                                        {selectedTask.status === 'pending' && (
-                                          <Button
-                                            size="sm"
-                                            onClick={() => handleStatusChange(selectedTask._id, 'started')}
-                                          >
-                                            Start Task
-                                          </Button>
-                                        )}
-
-                                        {selectedTask.status === 'started' && (
-                                          <Button
-                                            size="sm"
-                                            onClick={() => handleStatusChange(selectedTask._id, 'working')}
-                                          >
-                                            Mark Working
-                                          </Button>
-                                        )}
-
-                                        <Select value={newStatus} onValueChange={setNewStatus}>
-                                          <SelectTrigger className="w-40">
-                                            <SelectValue placeholder="Change status" />
+                                    <div className="border-t pt-4 space-y-4">
+                                      <div>
+                                        <label className="text-sm font-semibold">Status</label>
+                                        <Select 
+                                          value={selectedTask.status} 
+                                          onValueChange={(status) => {
+                                            if (status === 'pause') {
+                                              setPauseReason('');
+                                              setNewStatus(status);
+                                            } else {
+                                              handleStatusChange(selectedTask._id, status);
+                                            }
+                                          }}
+                                        >
+                                          <SelectTrigger className="mt-2">
+                                            <SelectValue />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            {selectedTask.status !== 'pending' && <SelectItem value="started">Started</SelectItem>}
+                                            <SelectItem value="pending">Pending</SelectItem>
                                             <SelectItem value="working">Working</SelectItem>
                                             <SelectItem value="pause">Pause</SelectItem>
                                             <SelectItem value="completed">Completed</SelectItem>
                                           </SelectContent>
                                         </Select>
+                                      </div>
 
-                                        {newStatus === 'pause' && (
+                                      {newStatus === 'pause' && (
+                                        <div>
+                                          <label className="text-sm font-semibold">Pause Reason</label>
                                           <Input
-                                            placeholder="Reason for pause"
+                                            placeholder="Enter reason for pause"
                                             value={pauseReason}
                                             onChange={(e) => setPauseReason(e.target.value)}
-                                            className="flex-1"
+                                            className="mt-2"
                                           />
-                                        )}
-
-                                        {newStatus && (
                                           <Button
                                             size="sm"
-                                            onClick={() => handleStatusChange(selectedTask._id, newStatus)}
+                                            className="mt-2"
+                                            onClick={() => handleStatusChange(selectedTask._id, 'pause')}
                                           >
-                                            Update
+                                            Confirm Pause
                                           </Button>
-                                        )}
+                                        </div>
+                                      )}
 
-                                        {canApprove(selectedTask) && (
-                                          <Button
-                                            size="sm"
-                                            variant="default"
-                                            className="bg-green-600 hover:bg-green-700"
-                                            onClick={() => handleApproveTask(selectedTask._id)}
-                                          >
-                                            <CheckCircle className="w-4 h-4 mr-2" />
-                                            Approve Task
-                                          </Button>
-                                        )}
-                                      </div>
+                                      {canApprove(selectedTask) && (
+                                        <Button
+                                          variant="default"
+                                          className="w-full bg-green-600 hover:bg-green-700"
+                                          onClick={() => handleApproveTask(selectedTask._id)}
+                                        >
+                                          <CheckCircle className="w-4 h-4 mr-2" />
+                                          Approve Task
+                                        </Button>
+                                      )}
                                     </div>
                                   )}
 
