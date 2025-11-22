@@ -627,6 +627,16 @@ export default function LeadsPanel() {
                           ))}
                         </div>
                       </div>
+
+                      {lead.nextFollowUp && (
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-blue-600" />
+                          <div>
+                            <p className="text-xs font-semibold text-gray-600 uppercase">Follow-up</p>
+                            <p className="text-sm font-medium text-blue-600">{new Date(lead.nextFollowUp).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
