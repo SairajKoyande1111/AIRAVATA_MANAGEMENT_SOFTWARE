@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,14 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Plus, X } from 'lucide-react';
 
-export default function RegisterClientPanel() {
+interface RegisterClientPanelProps {
+  editingClientId?: string | null;
+  onSave?: () => void;
+}
+
+export default function RegisterClientPanel({ editingClientId, onSave }: RegisterClientPanelProps) {
+  const [, setLocation] = useLocation();
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
     clientName: '',
@@ -45,6 +53,44 @@ export default function RegisterClientPanel() {
   const [currentRequirement, setCurrentRequirement] = useState('');
   const [currentTechReq, setCurrentTechReq] = useState('');
   const { toast } = useToast();
+
+  useEffect(() => {
+    const editData = localStorage.getItem('editingClientData');
+    if (editData) {
+      try {
+        const client = JSON.parse(editData);
+        setFormData({
+          companyName: client.companyName || '',
+          clientName: client.clientName || '',
+          designation: client.designation || '',
+          phone: client.phone || '',
+          email: client.email || '',
+          companyAddress: client.companyAddress || '',
+          meetingDate: client.meetingDate ? client.meetingDate.split('T')[0] : '',
+          meetingTime: client.meetingTime || '',
+          meetingLocation: client.meetingLocation || '',
+          salesPersons: client.salesPersons || [],
+          meetingMode: client.meetingMode || '',
+          businessOverview: client.businessOverview || '',
+          industryType: client.industryType || '',
+          problems: client.problems || [],
+          requirements: client.requirements || [],
+          technicalRequirements: client.technicalRequirements || [],
+          customNotes: client.customNotes || '',
+          services: client.services || [],
+          expectedBudget: client.expectedBudget || '',
+          projectTimeline: client.projectTimeline || '',
+          decisionMaker: client.decisionMaker || '',
+          urgencyLevel: client.urgencyLevel || 'Medium',
+          nextFollowUpDate: client.nextFollowUpDate ? client.nextFollowUpDate.split('T')[0] : '',
+          nextAction: client.nextAction || '',
+        });
+        setIsEditing(true);
+      } catch (error) {
+        console.error('Failed to parse client data:', error);
+      }
+    }
+  }, []);
 
   const fixedUsers = ['Aniket', 'Sairaj', 'Sejal', 'Pratik', 'Abhijeet'];
   
@@ -130,26 +176,42 @@ export default function RegisterClientPanel() {
     const token = localStorage.getItem('token');
 
     try {
-      const response = await fetch('/api/clients', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      let response;
+      const editData = localStorage.getItem('editingClientData');
+      
+      if (editData && isEditing) {
+        const clientData = JSON.parse(editData);
+        response = await fetch(`/api/clients/${clientData._id}`, {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+      } else {
+        response = await fetch('/api/clients', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+      }
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create client');
+        throw new Error(data.error || 'Failed to save client');
       }
 
       toast({
         title: 'Success',
-        description: 'Client registered successfully',
+        description: isEditing ? 'Client updated successfully' : 'Client registered successfully',
       });
 
+      localStorage.removeItem('editingClientData');
       setFormData({
         companyName: '',
         clientName: '',
@@ -176,6 +238,8 @@ export default function RegisterClientPanel() {
         nextFollowUpDate: '',
         nextAction: '',
       });
+      setIsEditing(false);
+      onSave?.();
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -187,14 +251,55 @@ export default function RegisterClientPanel() {
 
   return (
     <div className="p-8 w-full max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Register Client</h1>
-        <p className="text-muted-foreground">Add comprehensive client information and requirements</p>
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">{isEditing ? 'Edit Client' : 'Register Client'}</h1>
+          <p className="text-muted-foreground">
+            {isEditing ? 'Update client information and requirements' : 'Add comprehensive client information and requirements'}
+          </p>
+        </div>
+        {isEditing && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              localStorage.removeItem('editingClientData');
+              setIsEditing(false);
+              setFormData({
+                companyName: '',
+                clientName: '',
+                designation: '',
+                phone: '',
+                email: '',
+                companyAddress: '',
+                meetingDate: '',
+                meetingTime: '',
+                meetingLocation: '',
+                salesPersons: [],
+                meetingMode: '',
+                businessOverview: '',
+                industryType: '',
+                problems: [],
+                requirements: [],
+                technicalRequirements: [],
+                customNotes: '',
+                services: [],
+                expectedBudget: '',
+                projectTimeline: '',
+                decisionMaker: '',
+                urgencyLevel: 'Medium',
+                nextFollowUpDate: '',
+                nextAction: '',
+              });
+            }}
+          >
+            Cancel Edit
+          </Button>
+        )}
       </div>
 
       <Card className="border-0 shadow-none rounded-0">
         <CardHeader className="px-0 pt-0 pb-4">
-          <CardTitle className="text-lg">New Client Registration</CardTitle>
+          <CardTitle className="text-lg">{isEditing ? 'Edit Client Information' : 'New Client Registration'}</CardTitle>
         </CardHeader>
         <CardContent className="px-0 pb-0">
           <form onSubmit={handleSubmit} className="space-y-5 pb-8">
@@ -599,7 +704,7 @@ export default function RegisterClientPanel() {
             </div>
 
             <Button type="submit" data-testid="button-register-client" className="w-full mt-6">
-              Register Client
+              {isEditing ? 'Save Changes' : 'Register Client'}
             </Button>
           </form>
         </CardContent>
