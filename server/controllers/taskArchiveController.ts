@@ -5,17 +5,18 @@ import TaskArchive from '../models/TaskArchive';
 
 export const archiveDailyTasks = async (req: AuthRequest, res: Response) => {
   try {
-    const tasks = await Task.find()
+    // Only archive completed and approved tasks
+    const tasksToArchive = await Task.find({ status: { $in: ['completed', 'approved'] } })
       .populate('assignedTo', 'email name')
       .populate('assignedBy', 'email name')
       .populate('approvedBy', 'email name');
 
-    if (tasks.length === 0) {
-      return res.json({ message: 'No tasks to archive', archivedCount: 0 });
+    if (tasksToArchive.length === 0) {
+      return res.json({ message: 'No completed or approved tasks to archive', archivedCount: 0 });
     }
 
-    // Create archive records for each task
-    const archiveRecords = tasks.map(task => ({
+    // Create archive records for each completed/approved task
+    const archiveRecords = tasksToArchive.map(task => ({
       originalTaskId: task._id,
       title: task.title,
       description: task.description,
@@ -33,12 +34,12 @@ export const archiveDailyTasks = async (req: AuthRequest, res: Response) => {
 
     await TaskArchive.insertMany(archiveRecords);
 
-    // Delete all tasks after archiving
-    await Task.deleteMany({});
+    // Delete only completed and approved tasks after archiving
+    await Task.deleteMany({ status: { $in: ['completed', 'approved'] } });
 
     res.json({ 
       message: 'Tasks archived successfully', 
-      archivedCount: tasks.length 
+      archivedCount: tasksToArchive.length 
     });
   } catch (error) {
     console.error('Archive tasks error:', error);

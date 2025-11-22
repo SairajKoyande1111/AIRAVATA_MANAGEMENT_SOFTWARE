@@ -628,7 +628,14 @@ export default function TasksPanel() {
 
   const handleArchiveTasks = async () => {
     const token = localStorage.getItem('token');
-    const confirmed = window.confirm('Archive all tasks for today and clear the task section? This will move all tasks to history organized by date.');
+    const completedTasks = tasks.filter(t => t.status === 'completed' || t.status === 'approved');
+    
+    if (completedTasks.length === 0) {
+      toast({ description: 'No completed or approved tasks to archive', variant: 'destructive' });
+      return;
+    }
+
+    const confirmed = window.confirm(`Archive ${completedTasks.length} completed/approved task(s)? Pending, working, and paused tasks will remain active.`);
     
     if (!confirmed) return;
 
@@ -641,7 +648,7 @@ export default function TasksPanel() {
       if (!response.ok) throw new Error('Archive failed');
       
       const data = await response.json();
-      toast({ description: `${data.archivedCount} tasks archived successfully` });
+      toast({ description: `${data.archivedCount} tasks archived successfully. Active tasks remain.` });
       fetchTasks();
       setSearchTerm('');
       setSearchDate('');
