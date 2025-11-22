@@ -4,18 +4,63 @@ import Client from '../models/Client';
 
 export const createClient = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, phone, businessType, location, email } = req.body;
+    const {
+      companyName,
+      clientName,
+      designation,
+      phone,
+      email,
+      companyAddress,
+      meetingDate,
+      meetingTime,
+      meetingLocation,
+      salesPersons,
+      meetingMode,
+      businessOverview,
+      industryType,
+      problems,
+      requirements,
+      technicalRequirements,
+      customNotes,
+      services,
+      expectedBudget,
+      projectTimeline,
+      decisionMaker,
+      urgencyLevel,
+      nextFollowUpDate,
+      nextAction,
+    } = req.body;
 
-    if (!name || !phone || !businessType || !location || !email) {
-      return res.status(400).json({ error: 'All fields are required' });
+    // Validate required fields only
+    if (!companyName || !clientName || !phone || !email) {
+      return res.status(400).json({ error: 'Company Name, Client Name, Phone, and Email are required' });
     }
 
     const client = new Client({
-      name,
-      phone,
-      businessType,
-      location,
-      email,
+      companyName: companyName || 'NA',
+      clientName: clientName || 'NA',
+      designation: designation || 'NA',
+      phone: phone || 'NA',
+      email: email || 'NA',
+      companyAddress: companyAddress || 'NA',
+      meetingDate: meetingDate || null,
+      meetingTime: meetingTime || 'NA',
+      meetingLocation: meetingLocation || 'NA',
+      salesPersons: salesPersons && salesPersons.length > 0 ? salesPersons : [],
+      meetingMode: meetingMode || 'NA',
+      businessOverview: businessOverview || 'NA',
+      industryType: industryType || 'NA',
+      problems: problems && problems.length > 0 ? problems : [],
+      requirements: requirements && requirements.length > 0 ? requirements : [],
+      technicalRequirements: technicalRequirements && technicalRequirements.length > 0 ? technicalRequirements : [],
+      customNotes: customNotes || 'NA',
+      services: services && services.length > 0 ? services : [],
+      expectedBudget: expectedBudget || 'NA',
+      projectTimeline: projectTimeline || 'NA',
+      decisionMaker: decisionMaker || 'NA',
+      urgencyLevel: urgencyLevel || 'Medium',
+      nextFollowUpDate: nextFollowUpDate || null,
+      nextAction: nextAction || 'NA',
       createdBy: req.userId,
     });
 
