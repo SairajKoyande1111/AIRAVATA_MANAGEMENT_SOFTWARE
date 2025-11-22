@@ -16,6 +16,7 @@ export default function Sidebar({ activeSection, onSectionChange, onLogout }: Si
     { id: 'attendance', label: 'Attendance', icon: Calendar, color: 'text-blue-600' },
     { id: 'tasks', label: 'Tasks', icon: CheckSquare, color: 'text-indigo-600' },
     { id: 'history', label: 'Tasks History', icon: Archive, color: 'text-gray-600' },
+    { id: 'register-client', label: 'Register Client', icon: Users, color: 'text-green-600' },
     { id: 'clients', label: 'Clients', icon: Users, color: 'text-green-600' },
     { id: 'leads', label: 'Leads', icon: Target, color: 'text-purple-600' },
     { id: 'followups', label: 'Follow-ups', icon: MessageSquare, color: 'text-orange-600' },
