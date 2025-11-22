@@ -15,7 +15,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, X } from 'lucide-react';
 
 export default function RegisterClientPanel() {
-  const [clients, setClients] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     companyName: '',
     clientName: '',
@@ -48,23 +47,6 @@ export default function RegisterClientPanel() {
   const { toast } = useToast();
 
   const serviceOptions = ['WEBSITE', 'MOBILE APP', 'CUSTOM SOFTWARE', 'DIGITAL MARKETING', 'OTHERS'];
-
-  useEffect(() => {
-    fetchClients();
-  }, []);
-
-  const fetchClients = async () => {
-    const token = localStorage.getItem('token');
-    try {
-      const response = await fetch('/api/clients', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      setClients(data.clients || []);
-    } catch (error) {
-      console.error('Failed to fetch clients');
-    }
-  };
 
   const handleAddProblem = () => {
     if (currentProblem.trim()) {
@@ -177,7 +159,6 @@ export default function RegisterClientPanel() {
         nextFollowUpDate: '',
         nextAction: '',
       });
-      fetchClients();
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -595,32 +576,6 @@ export default function RegisterClientPanel() {
           </form>
         </CardContent>
       </Card>
-
-      {/* Registered Clients List */}
-      {clients.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Registered Clients</h2>
-          <div className="grid grid-cols-1 gap-4">
-            {clients.map((client) => (
-              <Card key={client._id} data-testid={`card-registered-client-${client._id}`}>
-                <CardHeader>
-                  <CardTitle>{client.companyName}</CardTitle>
-                  <CardDescription>{client.clientName} - {client.designation}</CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-4 text-sm">
-                  <div><strong>Phone:</strong> {client.phone}</div>
-                  <div><strong>Email:</strong> {client.email}</div>
-                  {client.services && client.services.length > 0 && (
-                    <div className="col-span-2">
-                      <strong>Services:</strong> {client.services.join(', ')}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
