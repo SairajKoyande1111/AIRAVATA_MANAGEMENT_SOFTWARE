@@ -3,14 +3,35 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Phone, MapPin, Building, Calendar, User, Briefcase, ChevronDown, ChevronUp } from 'lucide-react';
+import { Mail, Phone, MapPin, Building, Calendar, User, Briefcase, ChevronDown, ChevronUp, Edit, Trash2, Eye } from 'lucide-react';
 
 export default function ClientsPanel() {
   const [clients, setClients] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
+  const [editingClient, setEditingClient] = useState<any | null>(null);
+  const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -30,6 +51,71 @@ export default function ClientsPanel() {
       toast({
         title: 'Error',
         description: 'Failed to fetch clients',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteClient = async (clientId: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`/api/clients/${clientId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete client');
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Client deleted successfully',
+      });
+
+      setDeleteClientId(null);
+      fetchClients();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleEditClient = async () => {
+    if (!editingClient) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`/api/clients/${editingClient._id}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editingClient),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update client');
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Client updated successfully',
+      });
+
+      setEditDialogOpen(false);
+      setEditingClient(null);
+      fetchClients();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
         variant: 'destructive',
       });
     }
@@ -127,10 +213,7 @@ export default function ClientsPanel() {
         ) : (
           filteredClients.map((client) => (
             <Card key={client._id} data-testid={`card-client-${client._id}`} className="overflow-hidden">
-              <CardHeader
-                className="pb-3 cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => setExpandedClient(expandedClient === client._id ? null : client._id)}
-              >
+              <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
@@ -148,12 +231,125 @@ export default function ClientsPanel() {
                       </div>
                     </CardDescription>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-500">
-                    {expandedClient === client._id ? (
-                      <ChevronUp className="w-5 h-5" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5" />
-                    )}
+                  <div className="flex items-center gap-2">
+                    <Dialog open={editDialogOpen && editingClient?._id === client._id} onOpenChange={setEditDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingClient(client);
+                            setEditDialogOpen(true);
+                          }}
+                          data-testid={`button-edit-${client._id}`}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Edit Client</DialogTitle>
+                          <DialogDescription>Update client information</DialogDescription>
+                        </DialogHeader>
+                        {editingClient && (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label>Company Name</Label>
+                                <Input
+                                  value={editingClient.companyName}
+                                  onChange={(e) => setEditingClient({ ...editingClient, companyName: e.target.value })}
+                                  data-testid="input-edit-company"
+                                />
+                              </div>
+                              <div>
+                                <Label>Client Name</Label>
+                                <Input
+                                  value={editingClient.clientName}
+                                  onChange={(e) => setEditingClient({ ...editingClient, clientName: e.target.value })}
+                                  data-testid="input-edit-client"
+                                />
+                              </div>
+                              <div>
+                                <Label>Email</Label>
+                                <Input
+                                  type="email"
+                                  value={editingClient.email}
+                                  onChange={(e) => setEditingClient({ ...editingClient, email: e.target.value })}
+                                  data-testid="input-edit-email"
+                                />
+                              </div>
+                              <div>
+                                <Label>Phone</Label>
+                                <Input
+                                  value={editingClient.phone}
+                                  onChange={(e) => setEditingClient({ ...editingClient, phone: e.target.value })}
+                                  data-testid="input-edit-phone"
+                                />
+                              </div>
+                              <div>
+                                <Label>Designation</Label>
+                                <Input
+                                  value={editingClient.designation}
+                                  onChange={(e) => setEditingClient({ ...editingClient, designation: e.target.value })}
+                                  data-testid="input-edit-designation"
+                                />
+                              </div>
+                              <div>
+                                <Label>Industry Type</Label>
+                                <Input
+                                  value={editingClient.industryType}
+                                  onChange={(e) => setEditingClient({ ...editingClient, industryType: e.target.value })}
+                                  data-testid="input-edit-industry"
+                                />
+                              </div>
+                              <div className="col-span-2">
+                                <Label>Company Address</Label>
+                                <Input
+                                  value={editingClient.companyAddress}
+                                  onChange={(e) => setEditingClient({ ...editingClient, companyAddress: e.target.value })}
+                                  data-testid="input-edit-address"
+                                />
+                              </div>
+                              <div className="col-span-2">
+                                <Label>Business Overview</Label>
+                                <Input
+                                  value={editingClient.businessOverview}
+                                  onChange={(e) => setEditingClient({ ...editingClient, businessOverview: e.target.value })}
+                                  data-testid="input-edit-overview"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button onClick={handleEditClient} data-testid="button-save-edit">
+                                Save Changes
+                              </Button>
+                              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </DialogContent>
+                    </Dialog>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setExpandedClient(expandedClient === client._id ? null : client._id)}
+                      data-testid={`button-view-${client._id}`}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => setDeleteClientId(client._id)}
+                      data-testid={`button-delete-${client._id}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
@@ -389,6 +585,28 @@ export default function ClientsPanel() {
           ))
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteClientId} onOpenChange={(open) => !open && setDeleteClientId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Client</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this client? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-2">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteClientId && handleDeleteClient(deleteClientId)}
+              className="bg-destructive hover:bg-destructive/90"
+              data-testid="button-confirm-delete"
+            >
+              Delete
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Summary */}
       <div className="text-sm text-muted-foreground">

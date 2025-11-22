@@ -29,6 +29,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/clients", authenticateToken, clientController.createClient);
   app.get("/api/clients", authenticateToken, clientController.getClients);
   app.get("/api/clients/:id", authenticateToken, clientController.getClientById);
+  app.put("/api/clients/:id", authenticateToken, clientController.updateClient);
+  app.delete("/api/clients/:id", authenticateToken, clientController.deleteClient);
 
   // Lead routes (protected)
   app.post("/api/leads", authenticateToken, leadController.createLead);

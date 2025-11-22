@@ -106,3 +106,45 @@ export const getClientById = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Server error fetching client' });
   }
 };
+
+export const updateClient = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const client = await Client.findByIdAndUpdate(id, updateData, { new: true })
+      .populate('createdBy', 'name email');
+
+    if (!client) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    res.json({
+      message: 'Client updated successfully',
+      client,
+    });
+  } catch (error) {
+    console.error('Update client error:', error);
+    res.status(500).json({ error: 'Server error updating client' });
+  }
+};
+
+export const deleteClient = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const client = await Client.findByIdAndDelete(id);
+
+    if (!client) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    res.json({
+      message: 'Client deleted successfully',
+      client,
+    });
+  } catch (error) {
+    console.error('Delete client error:', error);
+    res.status(500).json({ error: 'Server error deleting client' });
+  }
+};
