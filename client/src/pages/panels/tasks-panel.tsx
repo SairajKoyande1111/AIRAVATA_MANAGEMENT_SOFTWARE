@@ -481,11 +481,12 @@ export default function TasksPanel() {
             📦 Archive Daily Tasks
           </Button>
           <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
-            <Button asChild data-testid="button-create-task">
-              <span>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Task
-              </span>
+            <Button 
+              data-testid="button-create-task"
+              onClick={() => setOpenCreateDialog(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Task
             </Button>
             <DialogContent>
               <DialogHeader>
