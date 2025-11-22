@@ -1,0 +1,163 @@
+Build a complete backend (Node.js + Express + MongoDB using Mongoose) for a 5-user internal company management system. 
+There are NO ROLES and NO ADMINS. All 5 users have login access and can view all attendance, client, lead, and follow-up data.
+
+====================================
+SYSTEM REQUIREMENTS
+====================================
+
+AUTHENTICATION:
+- Email + password login.
+- JWT-based authentication.
+- No admin, no roles. Anyone with an account can access and view all data.
+- Provide routes:
+    POST /auth/register   (Allow registration for 5 internal users)
+    POST /auth/login
+
+====================================
+ATTENDANCE MODULE
+====================================
+Daily attendance rules:
+- Work session starts at 10:00 AM.
+- Lunch break allowed only after 12:00 PM.
+- Lunch break max 1 hour.
+- Attendance fields:
+    clockIn
+    breakStart
+    breakEnd
+    clockOut
+    totalWorkMinutes (auto-calculated)
+- Prevent invalid conditions:
+    - breakStart < 12:00 PM → reject
+    - clockOut must be after clockIn
+    - totalWorkMinutes = (clockOut - clockIn) - breakDuration
+- Attendance schema:
+    {
+      userId,
+      date (YYYY-MM-DD),
+      clockIn,
+      breakStart,
+      breakEnd,
+      clockOut,
+      totalWorkMinutes,
+      createdAt,
+      updatedAt
+    }
+
+Attendance API endpoints:
+- POST /attendance/clockin
+- POST /attendance/break/start
+- POST /attendance/break/end
+- POST /attendance/clockout
+- GET /attendance?date=
+- GET /attendance/user/:userId
+- GET /attendance/summary?date=YYYY-MM-DD (team-wise summary)
+
+====================================
+CLIENT MODULE
+====================================
+Client fields:
+- name
+- phone
+- businessType
+- location
+- email
+- createdBy (userId)
+- createdAt
+
+Client APIs:
+- POST /clients
+- GET /clients
+- GET /clients/:id
+
+====================================
+LEADS MODULE
+====================================
+Lead fields:
+- clientId
+- registeredDate
+- assignedTo (userId)
+- requirementType dropdown:
+      Website
+      Mobile app
+      Custom software
+      Digital marketing
+      Other (with otherText)
+- requirementDetails: array of bullet points
+- priority: low/medium/high
+- stage: 
+      new
+      contacted
+      qualified
+      proposal
+      meeting
+      negotiation
+      won
+      lost
+- estimatedBudget
+- nextFollowUp
+- notes
+- createdAt
+
+Lead APIs:
+- POST /leads
+- GET /leads
+- GET /leads/:id
+- PUT /leads/:id
+
+====================================
+FOLLOW-UP MODULE
+====================================
+Follow-up fields:
+- leadId
+- userId
+- followUpDate
+- outcome
+- nextFollowUpDate
+- meetingPurpose
+- attachments (array of URLs)
+- createdAt
+
+Follow-up APIs:
+- POST /leads/:id/followups
+- GET /leads/:id/followups
+- GET /followups/due?date=YYYY-MM-DD (follow-ups due list)
+
+====================================
+REPORTS MODULE
+====================================
+Reports needed:
+1. Funnel report (count of leads by stage)
+    GET /reports/funnel?from=&to=
+2. Follow-ups due today
+    GET /reports/followups/due?date=
+
+====================================
+GENERAL REQUIREMENTS
+====================================
+- Use environment variables for MongoDB URI & JWT secret.
+- Provide folder structure:
+    /models
+    /controllers
+    /routes
+    /middleware
+    /config
+- Include:
+    - Mongoose models
+    - Controllers with full logic
+    - Express routes
+    - Middleware for JWT auth
+    - Validators (basic)
+    - README with setup steps
+    - Example CURL commands for each module
+
+====================================
+OUTPUT FORMAT
+====================================
+Return:
+- Full backend project scaffold
+- All model files
+- All controllers
+- All routes
+- app.js / server.js
+- Sample .env template
+- README with instructions & sample requests
