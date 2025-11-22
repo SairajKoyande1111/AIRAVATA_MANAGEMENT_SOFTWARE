@@ -74,8 +74,8 @@ export default function LeadsPanel() {
   const [formData, setFormData] = useState({
     clientId: '',
     registeredDate: new Date().toISOString().split('T')[0],
-    assignedTo: '',
-    requirementType: '',
+    assignedTo: [] as string[],
+    requirementType: [] as string[],
     otherText: '',
     requirementDetails: [] as string[],
     priority: 'medium',
@@ -135,7 +135,7 @@ export default function LeadsPanel() {
   };
 
   const handleCreateLead = async () => {
-    if (!formData.clientId || !formData.assignedTo || !formData.requirementType) {
+    if (!formData.clientId || formData.assignedTo.length === 0 || formData.requirementType.length === 0) {
       toast({
         title: 'Error',
         description: 'Please fill in all required fields',
@@ -173,10 +173,10 @@ export default function LeadsPanel() {
       setFormData({
         clientId: '',
         registeredDate: new Date().toISOString().split('T')[0],
-        assignedTo: '',
-        requirementType: '',
+        assignedTo: [],
+        requirementType: [],
         otherText: '',
-        requirementDetails: '',
+        requirementDetails: [],
         priority: 'medium',
         stage: 'new',
         estimatedBudget: '',
@@ -335,48 +335,15 @@ export default function LeadsPanel() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="assignedTo">Assigned To *</Label>
-                  <Select value={formData.assignedTo} onValueChange={(value) => setFormData({ ...formData, assignedTo: value })}>
-                    <SelectTrigger id="assignedTo" data-testid="select-assigned-to">
-                      <SelectValue placeholder="Select person" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {fixedUsers.map((user) => (
-                        <SelectItem key={user} value={user}>
-                          {user}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="requirementType">Service Required *</Label>
-                  <Select value={formData.requirementType} onValueChange={(value) => setFormData({ ...formData, requirementType: value })}>
-                    <SelectTrigger id="requirementType" data-testid="select-requirement-type">
-                      <SelectValue placeholder="Select service" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {requirementTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="priority">Priority</Label>
-                  <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
-                    <SelectTrigger id="priority" data-testid="select-priority">
+                  <Label htmlFor="stage">Stage</Label>
+                  <Select value={formData.stage} onValueChange={(value) => setFormData({ ...formData, stage: value })}>
+                    <SelectTrigger id="stage" data-testid="select-stage">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {priorities.map((p) => (
-                        <SelectItem key={p} value={p}>
-                          {p.charAt(0).toUpperCase() + p.slice(1)}
+                      {stages.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s.charAt(0).toUpperCase() + s.slice(1)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -384,7 +351,71 @@ export default function LeadsPanel() {
                 </div>
               </div>
 
-              {formData.requirementType === 'Other' && (
+              <div>
+                <Label htmlFor="assignedTo">Assigned To * (Select one or more)</Label>
+                <div className="flex flex-wrap gap-2" data-testid="multi-select-assigned-to">
+                  {fixedUsers.map((user) => (
+                    <Button
+                      key={user}
+                      type="button"
+                      variant={formData.assignedTo.includes(user) ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          assignedTo: formData.assignedTo.includes(user)
+                            ? formData.assignedTo.filter((p) => p !== user)
+                            : [...formData.assignedTo, user],
+                        });
+                      }}
+                    >
+                      {user}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="requirementType">Service Required * (Select one or more)</Label>
+                <div className="flex flex-wrap gap-2" data-testid="multi-select-services">
+                  {requirementTypes.map((type) => (
+                    <Button
+                      key={type}
+                      type="button"
+                      variant={formData.requirementType.includes(type) ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          requirementType: formData.requirementType.includes(type)
+                            ? formData.requirementType.filter((s) => s !== type)
+                            : [...formData.requirementType, type],
+                        });
+                      }}
+                    >
+                      {type}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="priority">Priority</Label>
+                <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
+                  <SelectTrigger id="priority" data-testid="select-priority">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {priorities.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {p.charAt(0).toUpperCase() + p.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.requirementType.includes('Other') && (
                 <div>
                   <Label htmlFor="otherText">Specify Service</Label>
                   <Input
@@ -411,7 +442,7 @@ export default function LeadsPanel() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="estimatedBudget">Estimated Budget ($)</Label>
+                  <Label htmlFor="estimatedBudget">Estimated Budget (₹)</Label>
                   <Input
                     id="estimatedBudget"
                     type="number"
@@ -537,8 +568,8 @@ export default function LeadsPanel() {
                     <CardDescription>
                       <div className="text-sm">
                         <p>Contact: {lead.clientId?.clientName}</p>
-                        <p>Service: {lead.requirementType}</p>
-                        {lead.estimatedBudget && <p>Budget: ${lead.estimatedBudget?.toLocaleString()}</p>}
+                        <p>Services: {Array.isArray(lead.requirementType) ? lead.requirementType.join(', ') : lead.requirementType}</p>
+                        {lead.estimatedBudget && <p>Budget: ₹{lead.estimatedBudget?.toLocaleString()}</p>}
                       </div>
                     </CardDescription>
                   </div>
