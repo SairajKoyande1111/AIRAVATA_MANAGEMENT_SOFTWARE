@@ -21,16 +21,9 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, CheckCircle, Pause } from 'lucide-react';
 
-const FIXED_USERS = [
-  { id: '1', email: 'raneaniket23@gmail.com', name: 'Aniket Rane' },
-  { id: '2', email: 'sairajkoyande@gmail.com', name: 'Sairaj Koyande' },
-  { id: '3', email: 'sejalyadav351@gmail.com', name: 'Sejal Yadav' },
-  { id: '4', email: 'pratikkadam2244@gmail.com', name: 'Pratik Kadam' },
-  { id: '5', email: 'abhijeet18012001@gmail.com', name: 'Abhijeet' },
-];
-
 export default function TasksPanel() {
   const [tasks, setTasks] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
@@ -44,10 +37,24 @@ export default function TasksPanel() {
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
+    fetchUsers();
     fetchTasks();
     const interval = setInterval(fetchTasks, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const fetchUsers = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch('/api/users', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      setUsers(data.users || []);
+    } catch (error) {
+      console.error('Failed to fetch users');
+    }
+  };
 
   const fetchTasks = async () => {
     const token = localStorage.getItem('token');
@@ -266,9 +273,9 @@ export default function TasksPanel() {
                     <SelectValue placeholder="Select user" />
                   </SelectTrigger>
                   <SelectContent>
-                    {FIXED_USERS.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.id === currentUser.id ? 'Self' : user.name}
+                    {users.map((user) => (
+                      <SelectItem key={user._id} value={user._id}>
+                        {user._id === currentUser.id ? 'Self' : user.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -8,6 +8,7 @@ import * as leadController from "./controllers/leadController";
 import * as followUpController from "./controllers/followUpController";
 import * as reportController from "./controllers/reportController";
 import * as taskController from "./controllers/taskController";
+import * as userController from "./controllers/userController";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes (public)
@@ -49,6 +50,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/tasks/:taskId/status", authenticateToken, taskController.updateTaskStatus);
   app.post("/api/tasks/:taskId/notes", authenticateToken, taskController.addNote);
   app.delete("/api/tasks/:taskId", authenticateToken, taskController.deleteTask);
+
+  // User routes (protected)
+  app.get("/api/users", authenticateToken, userController.getUsers);
 
   const httpServer = createServer(app);
 
