@@ -3,7 +3,9 @@ import { AuthRequest } from '../middleware/auth';
 import Attendance from '../models/Attendance';
 
 const formatDate = (date: Date): string => {
-  return date.toISOString().split('T')[0];
+  // Convert to IST (UTC+5:30)
+  const istDate = new Date(date.getTime() + (5.5 * 60 * 60 * 1000));
+  return istDate.toISOString().split('T')[0];
 };
 
 const calculateTotalWorkMinutes = (clockIn: Date, clockOut: Date, breakStart?: Date, breakEnd?: Date): number => {
