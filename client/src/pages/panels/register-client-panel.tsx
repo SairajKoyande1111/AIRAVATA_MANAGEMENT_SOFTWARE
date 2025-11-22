@@ -16,13 +16,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, X } from 'lucide-react';
 
 interface RegisterClientPanelProps {
-  editingClientId?: string | null;
+  isEditing?: boolean;
   onSave?: () => void;
 }
 
-export default function RegisterClientPanel({ editingClientId, onSave }: RegisterClientPanelProps) {
+export default function RegisterClientPanel({ isEditing: propsIsEditing = false, onSave }: RegisterClientPanelProps) {
   const [, setLocation] = useLocation();
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(propsIsEditing);
   const [formData, setFormData] = useState({
     companyName: '',
     clientName: '',
@@ -55,42 +55,46 @@ export default function RegisterClientPanel({ editingClientId, onSave }: Registe
   const { toast } = useToast();
 
   useEffect(() => {
-    const editData = localStorage.getItem('editingClientData');
-    if (editData) {
-      try {
-        const client = JSON.parse(editData);
-        setFormData({
-          companyName: client.companyName || '',
-          clientName: client.clientName || '',
-          designation: client.designation || '',
-          phone: client.phone || '',
-          email: client.email || '',
-          companyAddress: client.companyAddress || '',
-          meetingDate: client.meetingDate ? client.meetingDate.split('T')[0] : '',
-          meetingTime: client.meetingTime || '',
-          meetingLocation: client.meetingLocation || '',
-          salesPersons: client.salesPersons || [],
-          meetingMode: client.meetingMode || '',
-          businessOverview: client.businessOverview || '',
-          industryType: client.industryType || '',
-          problems: client.problems || [],
-          requirements: client.requirements || [],
-          technicalRequirements: client.technicalRequirements || [],
-          customNotes: client.customNotes || '',
-          services: client.services || [],
-          expectedBudget: client.expectedBudget || '',
-          projectTimeline: client.projectTimeline || '',
-          decisionMaker: client.decisionMaker || '',
-          urgencyLevel: client.urgencyLevel || 'Medium',
-          nextFollowUpDate: client.nextFollowUpDate ? client.nextFollowUpDate.split('T')[0] : '',
-          nextAction: client.nextAction || '',
-        });
-        setIsEditing(true);
-      } catch (error) {
-        console.error('Failed to parse client data:', error);
+    if (propsIsEditing) {
+      const editData = localStorage.getItem('editingClientData');
+      if (editData) {
+        try {
+          const client = JSON.parse(editData);
+          setFormData({
+            companyName: client.companyName || '',
+            clientName: client.clientName || '',
+            designation: client.designation || '',
+            phone: client.phone || '',
+            email: client.email || '',
+            companyAddress: client.companyAddress || '',
+            meetingDate: client.meetingDate ? client.meetingDate.split('T')[0] : '',
+            meetingTime: client.meetingTime || '',
+            meetingLocation: client.meetingLocation || '',
+            salesPersons: client.salesPersons || [],
+            meetingMode: client.meetingMode || '',
+            businessOverview: client.businessOverview || '',
+            industryType: client.industryType || '',
+            problems: client.problems || [],
+            requirements: client.requirements || [],
+            technicalRequirements: client.technicalRequirements || [],
+            customNotes: client.customNotes || '',
+            services: client.services || [],
+            expectedBudget: client.expectedBudget || '',
+            projectTimeline: client.projectTimeline || '',
+            decisionMaker: client.decisionMaker || '',
+            urgencyLevel: client.urgencyLevel || 'Medium',
+            nextFollowUpDate: client.nextFollowUpDate ? client.nextFollowUpDate.split('T')[0] : '',
+            nextAction: client.nextAction || '',
+          });
+          setIsEditing(true);
+        } catch (error) {
+          console.error('Failed to parse client data:', error);
+        }
       }
+    } else {
+      setIsEditing(false);
     }
-  }, []);
+  }, [propsIsEditing]);
 
   const fixedUsers = ['Aniket', 'Sairaj', 'Sejal', 'Pratik', 'Abhijeet'];
   
@@ -252,13 +256,15 @@ export default function RegisterClientPanel({ editingClientId, onSave }: Registe
   return (
     <div className="p-8 w-full max-w-6xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Register Client</h1>
-        <p className="text-muted-foreground">Add comprehensive client information and requirements</p>
+        <h1 className="text-3xl font-bold">{isEditing ? 'Edit Client' : 'Register Client'}</h1>
+        <p className="text-muted-foreground">
+          {isEditing ? 'Update client information and requirements' : 'Add comprehensive client information and requirements'}
+        </p>
       </div>
 
       <Card className="border-0 shadow-none rounded-0">
         <CardHeader className="px-0 pt-0 pb-4">
-          <CardTitle className="text-lg">New Client Registration</CardTitle>
+          <CardTitle className="text-lg">{isEditing ? 'Edit Client Details' : 'New Client Registration'}</CardTitle>
         </CardHeader>
         <CardContent className="px-0 pb-0">
           <form onSubmit={handleSubmit} className="space-y-5 pb-8">
@@ -663,7 +669,7 @@ export default function RegisterClientPanel({ editingClientId, onSave }: Registe
             </div>
 
             <Button type="submit" data-testid="button-register-client" className="w-full mt-6">
-              Register Client
+              {isEditing ? 'Save Details' : 'Register Client'}
             </Button>
           </form>
         </CardContent>

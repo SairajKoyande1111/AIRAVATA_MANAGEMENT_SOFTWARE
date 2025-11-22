@@ -26,9 +26,10 @@ import { Mail, Phone, MapPin, Building, Calendar, User, Briefcase, ChevronDown, 
 
 interface ClientsPanelProps {
   onNavigate?: (section: string) => void;
+  onEditMode?: (isEditing: boolean) => void;
 }
 
-export default function ClientsPanel({ onNavigate }: ClientsPanelProps) {
+export default function ClientsPanel({ onNavigate, onEditMode }: ClientsPanelProps) {
   const [clients, setClients] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -88,6 +89,9 @@ export default function ClientsPanel({ onNavigate }: ClientsPanelProps) {
 
   const handleEditClient = (client: any) => {
     localStorage.setItem('editingClientData', JSON.stringify(client));
+    if (onEditMode) {
+      onEditMode(true);
+    }
     if (onNavigate) {
       onNavigate('register-client');
     }

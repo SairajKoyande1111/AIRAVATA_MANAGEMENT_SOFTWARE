@@ -13,7 +13,7 @@ import ReportsPanel from './panels/reports-panel';
 export default function CRMDashboard() {
   const [, setLocation] = useLocation();
   const [activeSection, setActiveSection] = useState('attendance');
-  const [editingClientId, setEditingClientId] = useState<string | null>(null);
+  const [isEditingClient, setIsEditingClient] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -37,9 +37,9 @@ export default function CRMDashboard() {
       case 'history':
         return <HistoryPanel />;
       case 'register-client':
-        return <RegisterClientPanel editingClientId={editingClientId} onSave={() => setEditingClientId(null)} />;
+        return <RegisterClientPanel isEditing={isEditingClient} onSave={() => setIsEditingClient(false)} />;
       case 'clients':
-        return <ClientsPanel onNavigate={setActiveSection} />;
+        return <ClientsPanel onNavigate={setActiveSection} onEditMode={setIsEditingClient} />;
       case 'leads':
         return <LeadsPanel />;
       case 'followups':
@@ -56,7 +56,14 @@ export default function CRMDashboard() {
       <div className="w-64 flex-shrink-0">
         <Sidebar
           activeSection={activeSection}
-          onSectionChange={setActiveSection}
+          onSectionChange={(section) => {
+            setActiveSection(section);
+            if (section !== 'register-client') {
+              setIsEditingClient(false);
+            } else if (section === 'register-client' && !localStorage.getItem('editingClientData')) {
+              setIsEditingClient(false);
+            }
+          }}
           onLogout={handleLogout}
         />
       </div>
