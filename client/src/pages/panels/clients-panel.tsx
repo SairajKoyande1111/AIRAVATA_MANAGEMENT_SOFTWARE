@@ -204,25 +204,47 @@ export default function ClientsPanel({ onNavigate, onEditMode }: ClientsPanelPro
         ) : (
           filteredClients.map((client) => (
             <Card key={client._id} data-testid={`card-client-${client._id}`} className="overflow-hidden">
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-4 bg-gray-50">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-xl">{client.companyName}</CardTitle>
+                    <div className="flex items-center gap-2 mb-3">
+                      <CardTitle className="text-xl font-bold">{client.companyName}</CardTitle>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs font-semibold text-gray-600 uppercase">Contact Person</p>
+                        <p className="text-sm font-medium text-gray-900">{client.clientName} {client.designation && `- ${client.designation}`}</p>
+                      </div>
+
                       {client.services && client.services.length > 0 && (
-                        <Badge variant="secondary" className="text-xs">
-                          {client.services.length} service{client.services.length !== 1 ? 's' : ''}
-                        </Badge>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-600 uppercase mb-1">Services Required</p>
+                          <div className="flex flex-wrap gap-2">
+                            {client.services.map((service: string) => (
+                              <Badge key={service} className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+                                {service === 'WEBSITE' && 'Website'}
+                                {service === 'MOBILE APP' && 'Mobile App'}
+                                {service === 'CUSTOM SOFTWARE' && 'Custom Software'}
+                                {service === 'DIGITAL MARKETING' && 'Digital Marketing'}
+                                {service === 'OTHERS' && 'Others'}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
-                    <CardDescription className="mt-2">
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4" />
-                        {client.clientName} {client.designation && `- ${client.designation}`}
-                      </div>
-                    </CardDescription>
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setExpandedClient(expandedClient === client._id ? null : client._id)}
+                      data-testid={`button-view-${client._id}`}
+                      title={expandedClient === client._id ? 'Hide details' : 'Show details'}
+                    >
+                      {expandedClient === client._id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
@@ -230,15 +252,6 @@ export default function ClientsPanel({ onNavigate, onEditMode }: ClientsPanelPro
                       data-testid={`button-edit-${client._id}`}
                     >
                       <Edit className="w-4 h-4" />
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setExpandedClient(expandedClient === client._id ? null : client._id)}
-                      data-testid={`button-view-${client._id}`}
-                    >
-                      <Eye className="w-4 h-4" />
                     </Button>
 
                     <Button
@@ -254,42 +267,30 @@ export default function ClientsPanel({ onNavigate, onEditMode }: ClientsPanelPro
               </CardHeader>
 
               {/* Summary Row */}
-              <CardContent className="pb-3">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <CardContent className="pb-3 pt-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4 pb-4 border-b">
                   <div>
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <Mail className="w-4 h-4" />
-                      Email
-                    </div>
-                    <p className="text-gray-900 mt-1 truncate">{client.email}</p>
+                    <div className="text-xs font-semibold text-gray-600 uppercase">Email</div>
+                    <p className="text-gray-900 mt-1 truncate text-sm">{client.email}</p>
                   </div>
                   <div>
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <Phone className="w-4 h-4" />
-                      Phone
-                    </div>
-                    <p className="text-gray-900 mt-1">{client.phone}</p>
+                    <div className="text-xs font-semibold text-gray-600 uppercase">Phone</div>
+                    <p className="text-gray-900 mt-1 text-sm">{client.phone}</p>
                   </div>
                   <div>
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <Building className="w-4 h-4" />
-                      Industry
-                    </div>
-                    <p className="text-gray-900 mt-1">{client.industryType || 'NA'}</p>
+                    <div className="text-xs font-semibold text-gray-600 uppercase">Industry</div>
+                    <p className="text-gray-900 mt-1 text-sm">{client.industryType || 'NA'}</p>
                   </div>
                   <div>
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <Calendar className="w-4 h-4" />
-                      Registered
-                    </div>
-                    <p className="text-gray-900 mt-1 text-xs">{formatDate(client.createdAt)}</p>
+                    <div className="text-xs font-semibold text-gray-600 uppercase">Registered</div>
+                    <p className="text-gray-900 mt-1 text-xs text-sm">{formatDate(client.createdAt)}</p>
                   </div>
                 </div>
               </CardContent>
 
               {/* Expandable Details */}
               {expandedClient === client._id && (
-                <CardContent className="pt-0 border-t space-y-4">
+                <CardContent className="pt-4 space-y-4">
                   {/* Basic Information */}
                   <div>
                     <h4 className="font-semibold text-sm mb-2 text-gray-700">Basic Information</h4>
