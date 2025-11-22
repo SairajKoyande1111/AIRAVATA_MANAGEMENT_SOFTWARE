@@ -343,6 +343,7 @@ export default function TasksPanel() {
                   <TableHead>Title</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Assigned To</TableHead>
+                  <TableHead>Assigned By</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="w-20">Actions</TableHead>
@@ -355,6 +356,9 @@ export default function TasksPanel() {
                     <TableCell className="text-sm text-gray-600 max-w-xs truncate">{task.description}</TableCell>
                     <TableCell>
                       <span className="text-sm">{task.assignedTo.name || task.assignedTo.email}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm">{getAssignmentLabel(task)}</span>
                     </TableCell>
                     <TableCell>
                       <Badge
