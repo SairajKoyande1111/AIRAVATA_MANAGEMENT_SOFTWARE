@@ -40,6 +40,7 @@ export default function TasksPanel() {
   const [newNote, setNewNote] = useState('');
   const [newStatus, setNewStatus] = useState('');
   const [pauseReason, setPauseReason] = useState('');
+  const [dateInputValue, setDateInputValue] = useState('');
   const { toast } = useToast();
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -551,24 +552,50 @@ export default function TasksPanel() {
         <div className="flex items-center gap-2">
           <input
             type="date"
+            value={dateInputValue}
             onChange={(e) => {
-              const date = new Date(e.target.value);
-              const formatted = date.toLocaleDateString('en-IN', { year: 'numeric', month: '2-digit', day: '2-digit' });
-              setSearchDate(formatted);
+              setDateInputValue(e.target.value);
+              if (e.target.value) {
+                const date = new Date(e.target.value);
+                const formatted = date.toLocaleDateString('en-IN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                setSearchDate(formatted);
+              }
             }}
             className="hidden"
             id="task-date-filter"
             data-testid="input-search-date"
           />
-          <label
-            htmlFor="task-date-filter"
+          <button
+            type="button"
+            onClick={() => {
+              const dateInput = document.getElementById('task-date-filter') as HTMLInputElement;
+              if (dateInput) {
+                dateInput.click();
+              }
+            }}
             className="cursor-pointer p-2 rounded hover:bg-gray-100 transition-colors flex items-center gap-2"
             title={searchDate ? `Filtering by ${searchDate}` : 'Click to filter by date'}
             data-testid="button-date-filter-tasks"
           >
             <Calendar className={`w-5 h-5 ${searchDate ? 'text-blue-600' : 'text-gray-600'}`} />
-            {searchDate && <span className="text-xs text-gray-700 bg-blue-50 px-2 py-1 rounded">{searchDate}</span>}
-          </label>
+            {searchDate && (
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-700 bg-blue-50 px-2 py-1 rounded">{searchDate}</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSearchDate('');
+                    setDateInputValue('');
+                  }}
+                  className="text-xs text-gray-500 hover:text-gray-700"
+                  title="Clear date filter"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+          </button>
         </div>
       </div>
 
