@@ -28,7 +28,7 @@ export default function Sidebar({ activeSection, onSectionChange, onLogout }: Si
       <div className="p-6 border-b">
         <Link href="/dashboard">
           <div className="mb-4 cursor-pointer flex justify-center">
-            <img src="/company-logo.png" alt="Company Logo" className="h-24 object-contain" data-testid="logo-sidebar" />
+            <img src="/company-logo.png" alt="Company Logo" className="h-40 w-40 object-contain" data-testid="logo-sidebar" />
           </div>
         </Link>
         <p className="text-lg font-bold text-gray-900">{user.name}</p>
