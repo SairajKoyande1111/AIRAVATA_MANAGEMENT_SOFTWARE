@@ -186,21 +186,21 @@ export default function RegisterClientPanel() {
   };
 
   return (
-    <div className="p-8 w-full max-w-6xl mx-auto">
+    <div className="p-8 pb-0 w-full max-w-6xl mx-auto">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Register Client</h1>
         <p className="text-muted-foreground">Add comprehensive client information and requirements</p>
       </div>
 
-      <Card className="border-0 shadow-none">
-        <CardHeader className="px-0 pt-0">
-          <CardTitle>New Client Registration</CardTitle>
+      <Card className="border-0 shadow-none rounded-0">
+        <CardHeader className="px-0 pt-0 pb-4">
+          <CardTitle className="text-lg">New Client Registration</CardTitle>
         </CardHeader>
-        <CardContent className="px-0">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <CardContent className="px-0 pb-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Basic Client Information */}
-            <div className="mt-0">
-              <h3 className="text-lg font-semibold mb-4">Basic Client Information</h3>
+            <div className="mt-0 pt-0">
+              <h3 className="text-sm font-semibold mb-3 text-gray-700">Basic Client Information</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="companyName">Company Name</Label>
@@ -265,8 +265,8 @@ export default function RegisterClientPanel() {
             </div>
 
             {/* Meeting Information */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Meeting Information</h3>
+            <div className="pt-0">
+              <h3 className="text-sm font-semibold mb-3 text-gray-700">Meeting Information</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="meetingDate">Meeting Date</Label>
@@ -333,8 +333,8 @@ export default function RegisterClientPanel() {
             </div>
 
             {/* Business Overview */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Business Overview</h3>
+            <div className="pt-0">
+              <h3 className="text-sm font-semibold mb-3 text-gray-700">Business Overview</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2 col-span-2">
                   <Label htmlFor="businessOverview">Brief Overview of Client Business</Label>
@@ -359,8 +359,8 @@ export default function RegisterClientPanel() {
             </div>
 
             {/* Client Requirements */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Client Requirement Details</h3>
+            <div className="pt-0">
+              <h3 className="text-sm font-semibold mb-3 text-gray-700">Client Requirement Details</h3>
 
               {/* Problems */}
               <div className="space-y-3 mb-6">
@@ -518,8 +518,8 @@ export default function RegisterClientPanel() {
             </div>
 
             {/* Budget & Timeline */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Budget & Timeline</h3>
+            <div className="pt-0">
+              <h3 className="text-sm font-semibold mb-3 text-gray-700">Budget & Timeline</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="expectedBudget">Expected Budget Range</Label>
@@ -567,8 +567,8 @@ export default function RegisterClientPanel() {
             </div>
 
             {/* Follow-up & Next Steps */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Follow-up & Next Steps</h3>
+            <div className="pt-0 pb-0">
+              <h3 className="text-sm font-semibold mb-3 text-gray-700">Follow-up & Next Steps</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="nextFollowUpDate">Next Follow-up Date</Label>
@@ -598,7 +598,7 @@ export default function RegisterClientPanel() {
               </div>
             </div>
 
-            <Button type="submit" data-testid="button-register-client" className="w-full mb-0">
+            <Button type="submit" data-testid="button-register-client" className="w-full mt-6 mb-0">
               Register Client
             </Button>
           </form>
