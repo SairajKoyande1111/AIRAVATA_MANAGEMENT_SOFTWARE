@@ -8,10 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -20,19 +18,16 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const body = isLogin ? { email, password } : { email, password, name };
-
-      const response = await fetch(endpoint, {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Authentication failed');
+        throw new Error(data.error || 'Login failed');
       }
 
       localStorage.setItem('token', data.token);
@@ -40,7 +35,7 @@ export default function Login() {
 
       toast({
         title: 'Success',
-        description: isLogin ? 'Logged in successfully' : 'Account created successfully',
+        description: 'Logged in successfully',
       });
 
       setLocation('/dashboard');
@@ -59,28 +54,13 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-muted/30">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>{isLogin ? 'Login' : 'Create Account'}</CardTitle>
+          <CardTitle>Company Management System</CardTitle>
           <CardDescription>
-            {isLogin
-              ? 'Enter your credentials to access the system'
-              : 'Register a new account (max 5 users)'}
+            Enter your credentials to access the system
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  data-testid="input-name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -89,6 +69,7 @@ export default function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="your.email@gmail.com"
                 required
               />
             </div>
@@ -109,16 +90,7 @@ export default function Login() {
               className="w-full"
               disabled={loading}
             >
-              {loading ? 'Loading...' : isLogin ? 'Login' : 'Register'}
-            </Button>
-            <Button
-              type="button"
-              data-testid="button-toggle"
-              variant="ghost"
-              className="w-full"
-              onClick={() => setIsLogin(!isLogin)}
-            >
-              {isLogin ? 'Need an account? Register' : 'Have an account? Login'}
+              {loading ? 'Logging in...' : 'Login'}
             </Button>
           </form>
         </CardContent>
