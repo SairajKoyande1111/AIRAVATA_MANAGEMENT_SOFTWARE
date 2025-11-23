@@ -1,13 +1,14 @@
 import { Request, Response } from 'express';
 import OngoingProject from '../models/OngoingProject';
 import Project from '../models/Project';
+import { Types } from 'mongoose';
 
 const TEAM_MEMBERS = ['Aniket', 'Sairaj', 'Sejal', 'Pratik', 'Abhijeet'];
 
 export const createOngoingProject = async (req: Request, res: Response) => {
   try {
     const { projectId, assignedTeamMembers, startDate, endDate, status } = req.body;
-    const userId = (req as any).user?._id || (req as any).user?.id;
+    const userId = (req as any).userId;
 
     if (!projectId || !assignedTeamMembers || assignedTeamMembers.length === 0) {
       return res.status(400).json({ error: 'Project and team members are required' });
@@ -15,6 +16,10 @@ export const createOngoingProject = async (req: Request, res: Response) => {
 
     if (!startDate || !endDate) {
       return res.status(400).json({ error: 'Start date and end date are required' });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User authentication required' });
     }
 
     const project = await Project.findById(projectId);
@@ -30,7 +35,7 @@ export const createOngoingProject = async (req: Request, res: Response) => {
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       status: status || 'Not Started',
-      createdBy: userId,
+      createdBy: new Types.ObjectId(userId),
     });
 
     await ongoingProject.save();
