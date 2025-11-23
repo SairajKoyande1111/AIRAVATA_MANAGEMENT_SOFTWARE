@@ -48,43 +48,43 @@ interface Project {
 }
 
 const DEFAULT_FORM = {
-  projectName: 'E-commerce Website for Tech Store',
-  clientContactPerson: 'Rajesh Kumar',
-  clientMobileNumber: '+91 98765 43210',
-  clientEmail: 'rajesh@techstore.com',
-  services: ['Website Development', 'Digital Marketing'],
-  projectType: 'Custom Software Development',
-  projectDescription: 'Full-stack e-commerce platform with product catalog, shopping cart, payment gateway integration, and admin dashboard for managing inventory and orders.',
-  startDate: '2024-11-20',
-  expectedEndDate: '2025-02-20',
+  projectName: '',
+  clientContactPerson: '',
+  clientMobileNumber: '',
+  clientEmail: '',
+  services: [],
+  projectType: '',
+  projectDescription: '',
+  startDate: '',
+  expectedEndDate: '',
   actualEndDate: '',
-  projectStatus: 'In Progress',
-  priorityLevel: 'High',
-  progress: 45,
-  stage: 'Development',
-  meetingNotes: 'Client requested additional features in dashboard. Discussed timeline extension by 2 weeks. Approved budget increase of ₹50,000.',
-  clientFeedback: 'Client is happy with the design mockups. Wants faster payment checkout process. Concerned about mobile responsiveness.',
-  internalNotes: 'API integration with payment gateway taking longer than expected. Need to allocate extra resources. Database optimization required for large product catalog.',
-  nextActionDate: '2024-12-05',
+  projectStatus: 'Not Started',
+  priorityLevel: 'Medium',
+  progress: 0,
+  stage: 'Requirement Gathering',
+  meetingNotes: '',
+  clientFeedback: '',
+  internalNotes: '',
+  nextActionDate: '',
   financial: {
-    estimatedCost: 300000,
-    amountQuoted: 350000,
-    amountReceived: 175000,
-    invoiceDetails: 'INV-2024-001 (Nov 20, 2024) - 50%, INV-2024-002 (Jan 15, 2025) - 50% pending',
-    paymentStatus: 'Partial',
+    estimatedCost: 0,
+    amountQuoted: 0,
+    amountReceived: 0,
+    invoiceDetails: '',
+    paymentStatus: 'Pending',
   },
   technicalDetails: {
-    technologyStack: 'React, Node.js, Express, MongoDB, Stripe, JWT',
-    hostingDetails: 'AWS EC2 with RDS for database, CloudFront for CDN',
-    domainDetails: 'www.techstore-ecommerce.com (GoDaddy)',
-    credentials: 'AWS credentials stored in secure vault. API keys in environment variables.',
+    technologyStack: '',
+    hostingDetails: '',
+    domainDetails: '',
+    credentials: '',
   },
   deployment: {
-    deploymentStatus: 'In Progress',
-    deploymentDate: '2025-02-15',
-    uatNotes: 'Found 2 bugs in payment module - fixed and retested. Mobile testing in progress. Performance tests show 1.5s average load time.',
+    deploymentStatus: 'Not Started',
+    deploymentDate: '',
+    uatNotes: '',
     goLiveConfirmation: false,
-    maintenancePeriod: '12 months from launch',
+    maintenancePeriod: '',
   },
   finalRemarks: '',
   clientApproval: false,
@@ -105,7 +105,6 @@ export default function ProjectsPanel() {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState(DEFAULT_FORM);
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
-  const [generatedClientId, setGeneratedClientId] = useState<string>('');
 
   const token = localStorage.getItem('token');
 
@@ -145,9 +144,8 @@ export default function ProjectsPanel() {
 
       if (response.ok) {
         const data = await response.json();
-        toast.success(`Project created successfully with Client ID: ${data.clientId}`);
+        toast.success(`✅ Project created successfully with Client ID: ${data.clientId}`);
         setFormData(DEFAULT_FORM);
-        setGeneratedClientId('');
         await fetchProjects();
       } else {
         const error = await response.json();
@@ -216,14 +214,10 @@ export default function ProjectsPanel() {
                     </div>
 
                     <div>
-                      <FieldLabel label="Client ID *" description="The unique identifier of the client from your clients list (reference to existing client)" />
-                      <Input
-                        placeholder="e.g., CLT001 or paste client ID from clients section"
-                        value={formData.clientId}
-                        onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                        required
-                        data-testid="input-client-id"
-                      />
+                      <FieldLabel label="🔐 Client ID (Auto-Generated)" description="Client ID will be automatically assigned (JSSR01, JSSR02, etc.) when you create the project" />
+                      <div className="p-3 bg-blue-100 border border-blue-300 rounded text-sm font-medium text-blue-800" data-testid="display-client-id">
+                        ✓ Your Client ID will be generated automatically when you submit the form
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -259,6 +253,32 @@ export default function ProjectsPanel() {
                         required
                         data-testid="input-email"
                       />
+                    </div>
+
+                    <div>
+                      <FieldLabel label="Services *" description="Select all services you will provide for this client (you can choose multiple)" />
+                      <div className="space-y-2 p-3 border rounded bg-gray-50">
+                        {['Website Development', 'Mobile App Development', 'Custom Software Development', 'Digital Marketing'].map((service) => (
+                          <label key={service} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.services.includes(service)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFormData({ ...formData, services: [...formData.services, service] });
+                                } else {
+                                  setFormData({ ...formData, services: formData.services.filter(s => s !== service) });
+                                }
+                              }}
+                              className="w-4 h-4"
+                              data-testid={`checkbox-service-${service.toLowerCase().replace(/\s+/g, '-')}`}
+                            />
+                            <span className="text-sm">{service}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {formData.services.length === 0 && <p className="text-xs text-red-500 mt-1">⚠️ Please select at least one service</p>}
+                      {formData.services.length > 0 && <p className="text-xs text-green-600 mt-1">✓ Selected: {formData.services.join(', ')}</p>}
                     </div>
 
                     <div>
