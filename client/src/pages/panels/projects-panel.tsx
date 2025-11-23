@@ -52,7 +52,7 @@ const DEFAULT_FORM = {
   clientContactPerson: '',
   clientMobileNumber: '',
   clientEmail: '',
-  services: [],
+  services: [] as string[],
   projectType: '',
   projectDescription: '',
   startDate: '',
