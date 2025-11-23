@@ -1,257 +1,80 @@
-import { Response } from 'express';
-import { AuthRequest } from '../middleware/auth';
-import Project from '../models/Project';
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { authenticateToken } from "./middleware/auth";
+import * as authController from "./controllers/authController";
+import * as attendanceController from "./controllers/attendanceController";
+import * as clientController from "./controllers/clientController";
+import * as leadController from "./controllers/leadController";
+import * as followUpController from "./controllers/followUpController";
+import * as reportController from "./controllers/reportController";
+import * as taskController from "./controllers/taskController";
+import * as taskArchiveController from "./controllers/taskArchiveController";
+import * as userController from "./controllers/userController";
+import * as projectController from "./controllers/projectController";
 
-// Generate unique project ID
-const generateProjectId = async (): Promise<string> => {
-  const count = await Project.countDocuments();
-  return `PROJ-${Date.now()}-${count + 1}`;
-};
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Authentication routes (public)
+  app.post("/api/auth/register", authController.register);
+  app.post("/api/auth/login", authController.login);
 
-export const createProject = async (req: AuthRequest, res: Response) => {
-  try {
-    const {
-      projectName,
-      clientId,
-      clientContactPerson,
-      clientMobileNumber,
-      clientEmail,
-      projectType,
-      projectDescription,
-      startDate,
-      expectedEndDate,
-      projectLead,
-      priorityLevel,
-      teamMembers,
-    } = req.body;
+  // Attendance routes (protected)
+  app.post("/api/attendance/clockin", authenticateToken, attendanceController.clockIn);
+  app.post("/api/attendance/break/start", authenticateToken, attendanceController.breakStart);
+  app.post("/api/attendance/break/end", authenticateToken, attendanceController.breakEnd);
+  app.post("/api/attendance/clockout", authenticateToken, attendanceController.clockOut);
+  app.post("/api/attendance/reset-today", authenticateToken, attendanceController.resetTodayAttendance);
+  app.get("/api/attendance", authenticateToken, attendanceController.getAttendance);
+  app.get("/api/attendance/user/:userId", authenticateToken, attendanceController.getUserAttendance);
+  app.get("/api/attendance/summary", authenticateToken, attendanceController.getAttendanceSummary);
 
-    if (!projectName || !clientId || !clientContactPerson || !clientMobileNumber || !clientEmail || !projectType || !startDate || !expectedEndDate) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
+  // Client routes (protected)
+  app.post("/api/clients", authenticateToken, clientController.createClient);
+  app.get("/api/clients", authenticateToken, clientController.getClients);
+  app.get("/api/clients/:id", authenticateToken, clientController.getClientById);
+  app.put("/api/clients/:id", authenticateToken, clientController.updateClient);
+  app.delete("/api/clients/:id", authenticateToken, clientController.deleteClient);
 
-    const projectId = await generateProjectId();
+  // Lead routes (protected)
+  app.post("/api/leads", authenticateToken, leadController.createLead);
+  app.get("/api/leads", authenticateToken, leadController.getLeads);
+  app.get("/api/leads/:id", authenticateToken, leadController.getLeadById);
+  app.put("/api/leads/:id", authenticateToken, leadController.updateLead);
 
-    const project = new Project({
-      projectName,
-      projectId,
-      clientId,
-      clientContactPerson,
-      clientMobileNumber,
-      clientEmail,
-      projectType,
-      projectDescription,
-      startDate,
-      expectedEndDate,
-      projectLead: projectLead || req.userId,
-      priorityLevel: priorityLevel || 'Medium',
-      teamMembers: teamMembers || [],
-      createdBy: req.userId,
-    });
+  // Follow-up routes (protected)
+  app.post("/api/leads/:id/followups", authenticateToken, followUpController.createFollowUp);
+  app.get("/api/leads/:id/followups", authenticateToken, followUpController.getFollowUpsByLead);
+  app.get("/api/followups/due", authenticateToken, followUpController.getDueFollowUps);
 
-    await project.save();
-    await project.populate('clientId', 'companyName');
-    await project.populate('projectLead', 'email');
-    await project.populate('teamMembers.userId', 'email');
+  // Reports routes (protected)
+  app.get("/api/reports/funnel", authenticateToken, reportController.getFunnelReport);
+  app.get("/api/reports/followups/due", authenticateToken, reportController.getFollowUpsDueReport);
 
-    res.status(201).json({
-      message: 'Project created successfully',
-      project,
-    });
-  } catch (error) {
-    console.error('Create project error:', error);
-    res.status(500).json({ error: 'Server error creating project' });
-  }
-};
+  // Task routes (protected)
+  app.get("/api/tasks", authenticateToken, taskController.getTasks);
+  app.post("/api/tasks", authenticateToken, taskController.createTask);
+  app.put("/api/tasks/:taskId/status", authenticateToken, taskController.updateTaskStatus);
+  app.post("/api/tasks/:taskId/notes", authenticateToken, taskController.addNote);
+  app.delete("/api/tasks/:taskId", authenticateToken, taskController.deleteTask);
+  app.post("/api/tasks/:taskId/approve", authenticateToken, taskController.approveTask);
+  app.post("/api/tasks/archive/daily", authenticateToken, taskArchiveController.archiveDailyTasks);
+  app.get("/api/tasks/archive/all", authenticateToken, taskArchiveController.getAllArchives);
+  app.get("/api/tasks/archive/by-date", authenticateToken, taskArchiveController.getArchiveByDate);
 
-export const getProjects = async (req: AuthRequest, res: Response) => {
-  try {
-    const projects = await Project.find()
-      .populate('clientId', 'companyName')
-      .populate('projectLead', 'email')
-      .populate('teamMembers.userId', 'email')
-      .sort({ createdAt: -1 });
+  // User routes (protected)
+  app.get("/api/users", authenticateToken, userController.getUsers);
 
-    res.json({ projects });
-  } catch (error) {
-    console.error('Get projects error:', error);
-    res.status(500).json({ error: 'Server error fetching projects' });
-  }
-};
+  // Project routes (protected)
+  app.post("/api/projects", authenticateToken, projectController.createProject);
+  app.get("/api/projects", authenticateToken, projectController.getProjects);
+  app.get("/api/projects/:id", authenticateToken, projectController.getProjectById);
+  app.put("/api/projects/:id", authenticateToken, projectController.updateProject);
+  app.delete("/api/projects/:id", authenticateToken, projectController.deleteProject);
+  app.post("/api/projects/:id/tasks", authenticateToken, projectController.addTask);
+  app.put("/api/projects/:id/tasks/:taskId", authenticateToken, projectController.updateTask);
+  app.delete("/api/projects/:id/tasks/:taskId", authenticateToken, projectController.deleteTask);
+  app.post("/api/projects/:id/milestones", authenticateToken, projectController.addMilestone);
 
-export const getProjectById = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
+  const httpServer = createServer(app);
 
-    const project = await Project.findById(id)
-      .populate('clientId')
-      .populate('projectLead', 'email')
-      .populate('teamMembers.userId', 'email')
-      .populate('tasks.assignedTo', 'email');
-
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-
-    res.json({ project });
-  } catch (error) {
-    console.error('Get project error:', error);
-    res.status(500).json({ error: 'Server error fetching project' });
-  }
-};
-
-export const updateProject = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const updateData = req.body;
-
-    // Calculate project duration if dates are provided
-    if (updateData.startDate || updateData.expectedEndDate || updateData.actualEndDate) {
-      const project = await Project.findById(id);
-      if (project) {
-        const start = new Date(updateData.startDate || project.startDate);
-        const end = new Date(updateData.actualEndDate || updateData.expectedEndDate || project.expectedEndDate);
-        const duration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        updateData.projectDuration = duration;
-      }
-    }
-
-    const project = await Project.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
-      .populate('clientId')
-      .populate('projectLead', 'email')
-      .populate('teamMembers.userId', 'email')
-      .populate('tasks.assignedTo', 'email');
-
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-
-    res.json({
-      message: 'Project updated successfully',
-      project,
-    });
-  } catch (error) {
-    console.error('Update project error:', error);
-    res.status(500).json({ error: 'Server error updating project' });
-  }
-};
-
-export const deleteProject = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    const project = await Project.findByIdAndDelete(id);
-
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-
-    res.json({
-      message: 'Project deleted successfully',
-    });
-  } catch (error) {
-    console.error('Delete project error:', error);
-    res.status(500).json({ error: 'Server error deleting project' });
-  }
-};
-
-// Add task to project
-export const addTask = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const taskData = req.body;
-
-    const project = await Project.findById(id);
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-
-    project.tasks.push(taskData);
-    await project.save();
-    await project.populate('tasks.assignedTo', 'email');
-
-    res.json({
-      message: 'Task added successfully',
-      project,
-    });
-  } catch (error) {
-    console.error('Add task error:', error);
-    res.status(500).json({ error: 'Server error adding task' });
-  }
-};
-
-// Update task in project
-export const updateTask = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id, taskId } = req.params;
-    const updateData = req.body;
-
-    const project = await Project.findById(id);
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-
-    const task = project.tasks.id(taskId);
-    if (!task) {
-      return res.status(404).json({ error: 'Task not found' });
-    }
-
-    Object.assign(task, updateData);
-    await project.save();
-    await project.populate('tasks.assignedTo', 'email');
-
-    res.json({
-      message: 'Task updated successfully',
-      project,
-    });
-  } catch (error) {
-    console.error('Update task error:', error);
-    res.status(500).json({ error: 'Server error updating task' });
-  }
-};
-
-// Delete task from project
-export const deleteTask = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id, taskId } = req.params;
-
-    const project = await Project.findById(id);
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-
-    project.tasks.id(taskId)?.deleteOne();
-    await project.save();
-
-    res.json({
-      message: 'Task deleted successfully',
-      project,
-    });
-  } catch (error) {
-    console.error('Delete task error:', error);
-    res.status(500).json({ error: 'Server error deleting task' });
-  }
-};
-
-// Add milestone
-export const addMilestone = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const milestoneData = req.body;
-
-    const project = await Project.findById(id);
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-
-    project.milestones.push(milestoneData);
-    await project.save();
-
-    res.json({
-      message: 'Milestone added successfully',
-      project,
-    });
-  } catch (error) {
-    console.error('Add milestone error:', error);
-    res.status(500).json({ error: 'Server error adding milestone' });
-  }
-};
+  return httpServer;
+}
