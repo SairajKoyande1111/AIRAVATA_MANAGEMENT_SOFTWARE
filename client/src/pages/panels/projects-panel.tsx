@@ -104,6 +104,8 @@ export default function ProjectsPanel() {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState(DEFAULT_FORM);
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
+  const [editingProject, setEditingProject] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState<any>(null);
 
   const token = localStorage.getItem('token');
 
@@ -167,11 +169,41 @@ export default function ProjectsPanel() {
       });
 
       if (response.ok) {
-        toast.success('Project deleted');
+        toast.success('✅ Project deleted successfully');
+        setEditingProject(null);
         await fetchProjects();
       }
     } catch (error) {
       toast.error('Failed to delete project');
+    }
+  };
+
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project._id);
+    setEditFormData(JSON.parse(JSON.stringify(project)));
+  };
+
+  const handleSaveProject = async (projectId: string) => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editFormData),
+      });
+
+      if (response.ok) {
+        toast.success('✅ Project updated successfully');
+        setEditingProject(null);
+        await fetchProjects();
+      } else {
+        const error = await response.json();
+        toast.error(error.error || 'Failed to update project');
+      }
+    } catch (error) {
+      toast.error('Failed to update project');
     }
   };
 
@@ -584,7 +616,7 @@ export default function ProjectsPanel() {
             </Card>
           ) : (
             projects.map((project) => (
-              <Card key={project._id} data-testid={`card-project-${project._id}`}>
+              <Card key={project._id} data-testid={`card-project-${project._id}`} className={editingProject === project._id ? 'border-blue-500 border-2' : ''}>
                 <Collapsible open={expandedProject === project._id} onOpenChange={(open) => setExpandedProject(open ? project._id : null)}>
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
@@ -593,35 +625,199 @@ export default function ProjectsPanel() {
                           <h3 className="text-xl font-bold" data-testid={`text-project-name-${project._id}`}>
                             {project.projectName}
                           </h3>
-                          <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">{project.projectId}</span>
+                          <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded" data-testid={`text-project-id-${project._id}`}>{project.projectId}</span>
+                          <span className="text-xs bg-green-500 text-white px-2 py-1 rounded">{project.clientId}</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">{project.projectType}</p>
+                        <p className="text-sm text-muted-foreground">Services: {project.services?.join(', ')}</p>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => handleDeleteProject(project._id)} data-testid={`button-delete-project-${project._id}`}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                        <CollapsibleTrigger asChild>
-                          <Button size="sm" variant="outline">
-                            <ChevronDown className="w-4 h-4" />
-                          </Button>
-                        </CollapsibleTrigger>
+                        {editingProject === project._id ? (
+                          <>
+                            <Button size="sm" variant="default" onClick={() => handleSaveProject(project._id)} className="bg-green-600 hover:bg-green-700" data-testid={`button-save-project-${project._id}`}>
+                              💾 Save
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setEditingProject(null)} data-testid={`button-cancel-project-${project._id}`}>
+                              ✕ Cancel
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => handleEditProject(project)} data-testid={`button-edit-project-${project._id}`}>
+                              ✏️ Edit
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => handleDeleteProject(project._id)} data-testid={`button-delete-project-${project._id}`}>
+                              🗑️ Delete
+                            </Button>
+                            <CollapsibleTrigger asChild>
+                              <Button size="sm" variant="outline">
+                                <ChevronDown className="w-4 h-4" />
+                              </Button>
+                            </CollapsibleTrigger>
+                          </>
+                        )}
                       </div>
                     </div>
                   </CardHeader>
 
                   <CollapsibleContent>
-                    <CardContent className="space-y-4 border-t pt-6 text-sm">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-muted-foreground">Status</p>
-                          <p className="font-medium">{project.projectStatus}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Priority</p>
-                          <p className="font-medium">{project.priorityLevel}</p>
-                        </div>
-                      </div>
+                    <CardContent className="space-y-6 border-t pt-6">
+                      {editingProject === project._id && editFormData ? (
+                        <form className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-sm font-medium">Project Name</label>
+                              <Input value={editFormData.projectName} onChange={(e) => setEditFormData({ ...editFormData, projectName: e.target.value })} />
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium">Contact Person</label>
+                              <Input value={editFormData.clientContactPerson} onChange={(e) => setEditFormData({ ...editFormData, clientContactPerson: e.target.value })} />
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium">Mobile</label>
+                              <Input value={editFormData.clientMobileNumber} onChange={(e) => setEditFormData({ ...editFormData, clientMobileNumber: e.target.value })} />
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium">Email</label>
+                              <Input type="email" value={editFormData.clientEmail} onChange={(e) => setEditFormData({ ...editFormData, clientEmail: e.target.value })} />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-sm font-medium">Status</label>
+                              <Select value={editFormData.projectStatus} onValueChange={(val) => setEditFormData({ ...editFormData, projectStatus: val })}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Not Started">Not Started</SelectItem>
+                                  <SelectItem value="In Progress">In Progress</SelectItem>
+                                  <SelectItem value="On Hold">On Hold</SelectItem>
+                                  <SelectItem value="Completed">Completed</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium">Priority</label>
+                              <Select value={editFormData.priorityLevel} onValueChange={(val) => setEditFormData({ ...editFormData, priorityLevel: val })}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Low">Low</SelectItem>
+                                  <SelectItem value="Medium">Medium</SelectItem>
+                                  <SelectItem value="High">High</SelectItem>
+                                  <SelectItem value="Critical">Critical</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium">Progress (%)</label>
+                            <Input type="number" min="0" max="100" value={editFormData.progress} onChange={(e) => setEditFormData({ ...editFormData, progress: parseInt(e.target.value) || 0 })} />
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium">Description</label>
+                            <Textarea value={editFormData.projectDescription} onChange={(e) => setEditFormData({ ...editFormData, projectDescription: e.target.value })} className="min-h-20" />
+                          </div>
+                        </form>
+                      ) : (
+                        <>
+                          <div className="grid grid-cols-2 gap-6">
+                            <div>
+                              <p className="text-sm text-muted-foreground">📌 Project Name</p>
+                              <p className="font-medium">{project.projectName}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">🆔 Client ID</p>
+                              <p className="font-medium text-green-600">{project.clientId}</p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-4 border-t pt-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">👤 Contact</p>
+                              <p className="font-medium">{project.clientContactPerson}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">📱 Mobile</p>
+                              <p className="font-medium">{project.clientMobileNumber}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">📧 Email</p>
+                              <p className="font-medium text-blue-600">{project.clientEmail}</p>
+                            </div>
+                          </div>
+
+                          <div className="border-t pt-4">
+                            <p className="text-sm text-muted-foreground">🛠️ Services</p>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {project.services?.map((service) => (
+                                <span key={service} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                  {service}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-4 border-t pt-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">📊 Status</p>
+                              <p className="font-medium">{project.projectStatus}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">🎯 Priority</p>
+                              <p className="font-medium">{project.priorityLevel}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">⚙️ Stage</p>
+                              <p className="font-medium">{project.stage}</p>
+                            </div>
+                          </div>
+
+                          <div className="border-t pt-4">
+                            <p className="text-sm text-muted-foreground">📈 Progress</p>
+                            <div className="w-full bg-gray-200 rounded h-2 mt-2">
+                              <div className="bg-blue-600 h-2 rounded" style={{ width: `${project.progress}%` }}></div>
+                            </div>
+                            <p className="font-medium mt-1">{project.progress}%</p>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">📅 Start Date</p>
+                              <p className="font-medium">{new Date(project.startDate).toLocaleDateString()}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">🏁 End Date</p>
+                              <p className="font-medium">{new Date(project.expectedEndDate).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+
+                          <div className="border-t pt-4">
+                            <p className="text-sm text-muted-foreground">📝 Description</p>
+                            <p className="font-medium mt-1">{project.projectDescription}</p>
+                          </div>
+
+                          {project.meetingNotes && (
+                            <div className="border-t pt-4">
+                              <p className="text-sm text-muted-foreground">💬 Meeting Notes</p>
+                              <p className="font-medium mt-1">{project.meetingNotes}</p>
+                            </div>
+                          )}
+
+                          {project.financial && (
+                            <div className="border-t pt-4">
+                              <p className="text-sm text-muted-foreground font-bold">💰 Financial Details</p>
+                              <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                                <div>Estimated: ₹{project.financial.estimatedCost?.toLocaleString()}</div>
+                                <div>Quoted: ₹{project.financial.amountQuoted?.toLocaleString()}</div>
+                                <div>Received: ₹{project.financial.amountReceived?.toLocaleString()}</div>
+                                <div>Status: {project.financial.paymentStatus}</div>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>
