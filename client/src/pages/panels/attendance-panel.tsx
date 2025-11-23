@@ -81,6 +81,45 @@ export default function AttendancePanel() {
     }
   };
 
+  const handleResetAttendance = async () => {
+    const confirmed = window.confirm('Are you sure you want to reset today\'s attendance? This action cannot be undone.');
+    if (!confirmed) return;
+
+    setLoading(true);
+    const token = localStorage.getItem('token');
+
+    try {
+      const response = await fetch('/api/attendance/reset-today', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Reset failed');
+      }
+
+      toast({
+        title: 'Success',
+        description: data.message,
+      });
+
+      await fetchAllAttendance();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDateChange = (days: number) => {
     const date = new Date(selectedDate + 'T00:00:00');
     date.setDate(date.getDate() + days);
@@ -230,6 +269,19 @@ export default function AttendancePanel() {
                 <ClockOut className="w-4 h-4 mr-2" />
                 Clock Out
               </Button>
+
+              {myAttendance && (
+                <Button
+                  data-testid="button-reset-attendance"
+                  onClick={handleResetAttendance}
+                  disabled={loading}
+                  variant="outline"
+                  className="w-full text-red-600 hover:text-red-700 border-red-300"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Reset Today
+                </Button>
+              )}
             </CardContent>
           </Card>
 

@@ -219,3 +219,22 @@ export const getAttendanceSummary = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Server error fetching attendance summary' });
   }
 };
+
+export const resetTodayAttendance = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId!;
+    const today = formatDate(new Date());
+
+    const attendance = await Attendance.findOne({ userId, date: today });
+    if (!attendance) {
+      return res.status(400).json({ error: 'No attendance record found for today' });
+    }
+
+    await Attendance.deleteOne({ userId, date: today });
+
+    res.json({ message: 'Today\'s attendance has been reset successfully' });
+  } catch (error) {
+    console.error('Reset attendance error:', error);
+    res.status(500).json({ error: 'Server error resetting attendance' });
+  }
+};

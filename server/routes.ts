@@ -21,6 +21,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/attendance/break/start", authenticateToken, attendanceController.breakStart);
   app.post("/api/attendance/break/end", authenticateToken, attendanceController.breakEnd);
   app.post("/api/attendance/clockout", authenticateToken, attendanceController.clockOut);
+  app.post("/api/attendance/reset-today", authenticateToken, attendanceController.resetTodayAttendance);
   app.get("/api/attendance", authenticateToken, attendanceController.getAttendance);
   app.get("/api/attendance/user/:userId", authenticateToken, attendanceController.getUserAttendance);
   app.get("/api/attendance/summary", authenticateToken, attendanceController.getAttendanceSummary);
