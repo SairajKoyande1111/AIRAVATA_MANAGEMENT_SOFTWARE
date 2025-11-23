@@ -76,12 +76,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects/:id/milestones", authenticateToken, projectController.addMilestone);
 
   // Ongoing Project routes (protected)
+  app.get("/api/ongoing-projects/team-members", authenticateToken, ongoingProjectController.getTeamMembers);
+  app.get("/api/ongoing-projects/available-projects", authenticateToken, ongoingProjectController.getAvailableProjects);
   app.post("/api/ongoing-projects", authenticateToken, ongoingProjectController.createOngoingProject);
   app.get("/api/ongoing-projects", authenticateToken, ongoingProjectController.getOngoingProjects);
   app.put("/api/ongoing-projects/:id", authenticateToken, ongoingProjectController.updateOngoingProject);
   app.delete("/api/ongoing-projects/:id", authenticateToken, ongoingProjectController.deleteOngoingProject);
-  app.get("/api/ongoing-projects/team-members", authenticateToken, ongoingProjectController.getTeamMembers);
-  app.get("/api/ongoing-projects/available-projects", authenticateToken, ongoingProjectController.getAvailableProjects);
 
   const httpServer = createServer(app);
 

@@ -7,7 +7,7 @@ const TEAM_MEMBERS = ['Aniket', 'Sairaj', 'Sejal', 'Pratik', 'Abhijeet'];
 export const createOngoingProject = async (req: Request, res: Response) => {
   try {
     const { projectId, assignedTeamMembers, startDate, endDate, status } = req.body;
-    const userId = (req as any).user.id;
+    const userId = (req as any).user?._id || (req as any).user?.id;
 
     if (!projectId || !assignedTeamMembers || assignedTeamMembers.length === 0) {
       return res.status(400).json({ error: 'Project and team members are required' });
