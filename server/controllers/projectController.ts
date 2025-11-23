@@ -54,7 +54,6 @@ export const createProject = async (req: AuthRequest, res: Response) => {
     });
 
     await project.save();
-    await project.populate('clientId', 'companyName');
     await project.populate('projectLead', 'name email');
     await project.populate('teamMembers.userId', 'name email');
 
@@ -71,7 +70,6 @@ export const createProject = async (req: AuthRequest, res: Response) => {
 export const getProjects = async (req: AuthRequest, res: Response) => {
   try {
     const projects = await Project.find()
-      .populate('clientId', 'companyName')
       .populate('projectLead', 'name email')
       .populate('teamMembers.userId', 'name email')
       .sort({ createdAt: -1 });
@@ -88,7 +86,6 @@ export const getProjectById = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const project = await Project.findById(id)
-      .populate('clientId')
       .populate('projectLead', 'name email')
       .populate('teamMembers.userId', 'name email')
       .populate('tasks.assignedTo', 'name email');
@@ -121,7 +118,6 @@ export const updateProject = async (req: AuthRequest, res: Response) => {
     }
 
     const project = await Project.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
-      .populate('clientId')
       .populate('projectLead', 'name email')
       .populate('teamMembers.userId', 'name email')
       .populate('tasks.assignedTo', 'name email');

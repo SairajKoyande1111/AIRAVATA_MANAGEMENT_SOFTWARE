@@ -228,8 +228,7 @@ const ProjectSchema = new Schema<IProject>(
       trim: true,
     },
     clientId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Client',
+      type: String,
       required: true,
     },
     clientContactPerson: {
