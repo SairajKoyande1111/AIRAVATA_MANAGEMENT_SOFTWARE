@@ -7,6 +7,7 @@ import HistoryPanel from './panels/history-panel';
 import RegisterClientPanel from './panels/register-client-panel';
 import ClientsPanel from './panels/clients-panel';
 import LeadsPanel from './panels/leads-panel';
+import ProjectsPanel from './panels/projects-panel';
 import FollowupsPanel from './panels/followups-panel';
 import ReportsPanel from './panels/reports-panel';
 
@@ -42,6 +43,8 @@ export default function CRMDashboard() {
         return <ClientsPanel onNavigate={(section) => setActiveSection(section)} onEditMode={setIsEditingClient} />;
       case 'leads':
         return <LeadsPanel />;
+      case 'projects':
+        return <ProjectsPanel />;
       case 'followups':
         return <FollowupsPanel />;
       case 'reports':

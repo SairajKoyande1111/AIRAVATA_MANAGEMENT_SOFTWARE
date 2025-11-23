@@ -118,7 +118,7 @@ export default function ProjectsPanel() {
       });
 
       if (response.ok) {
-        toast({ title: 'Success', description: 'Project created successfully' });
+        toast.success('Project created successfully');
         setFormData({
           projectName: '',
           clientId: '',
@@ -136,10 +136,10 @@ export default function ProjectsPanel() {
         await fetchProjects();
       } else {
         const error = await response.json();
-        toast({ title: 'Error', description: error.error, variant: 'destructive' });
+        toast.error(error.error);
       }
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to create project', variant: 'destructive' });
+      toast.error('Failed to create project');
     } finally {
       setLoading(false);
     }
@@ -155,11 +155,11 @@ export default function ProjectsPanel() {
       });
 
       if (response.ok) {
-        toast({ title: 'Success', description: 'Project deleted' });
+        toast.success('Project deleted');
         await fetchProjects();
       }
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to delete project', variant: 'destructive' });
+      toast.error('Failed to delete project');
     }
   };
 

@@ -193,12 +193,12 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Project not found' });
     }
 
-    const task = project.tasks.id(taskId);
-    if (!task) {
+    const taskIndex = project.tasks.findIndex((t: any) => t._id?.toString() === taskId);
+    if (taskIndex === -1) {
       return res.status(404).json({ error: 'Task not found' });
     }
 
-    Object.assign(task, updateData);
+    Object.assign(project.tasks[taskIndex], updateData);
     await project.save();
     await project.populate('tasks.assignedTo', 'name email');
 
@@ -221,7 +221,7 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Project not found' });
     }
 
-    project.tasks.id(taskId)?.deleteOne();
+    project.tasks = project.tasks.filter((t: any) => t._id?.toString() !== taskId);
     await project.save();
 
     res.json({
