@@ -795,27 +795,75 @@ export default function ProjectsPanel() {
 
                           <div className="border-t pt-4">
                             <p className="text-sm text-muted-foreground">📝 Description</p>
-                            <p className="font-medium mt-1">{project.projectDescription}</p>
+                            <p className="font-medium mt-1">{project.projectDescription || 'N/A'}</p>
                           </div>
 
-                          {project.meetingNotes && (
-                            <div className="border-t pt-4">
-                              <p className="text-sm text-muted-foreground">💬 Meeting Notes</p>
-                              <p className="font-medium mt-1">{project.meetingNotes}</p>
-                            </div>
-                          )}
+                          <div className="border-t pt-4">
+                            <p className="text-sm text-muted-foreground">💬 Meeting Notes</p>
+                            <p className="font-medium mt-1">{project.meetingNotes || 'N/A'}</p>
+                          </div>
 
-                          {project.financial && (
-                            <div className="border-t pt-4">
-                              <p className="text-sm text-muted-foreground font-bold">💰 Financial Details</p>
-                              <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
-                                <div>Estimated: ₹{project.financial.estimatedCost?.toLocaleString()}</div>
-                                <div>Quoted: ₹{project.financial.amountQuoted?.toLocaleString()}</div>
-                                <div>Received: ₹{project.financial.amountReceived?.toLocaleString()}</div>
-                                <div>Status: {project.financial.paymentStatus}</div>
-                              </div>
+                          <div className="border-t pt-4">
+                            <p className="text-sm text-muted-foreground">📢 Client Feedback</p>
+                            <p className="font-medium mt-1">{project.clientFeedback || 'N/A'}</p>
+                          </div>
+
+                          <div className="border-t pt-4">
+                            <p className="text-sm text-muted-foreground">🔒 Internal Notes</p>
+                            <p className="font-medium mt-1">{project.internalNotes || 'N/A'}</p>
+                          </div>
+
+                          <div className="border-t pt-4">
+                            <p className="text-sm text-muted-foreground">📅 Next Action Date</p>
+                            <p className="font-medium mt-1">{project.nextActionDate ? new Date(project.nextActionDate).toLocaleDateString() : 'N/A'}</p>
+                          </div>
+
+                          <div className="border-t pt-4">
+                            <p className="text-sm text-muted-foreground font-bold">💰 Financial Details</p>
+                            <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                              <div>Estimated: ₹{project.financial?.estimatedCost?.toLocaleString() || 'N/A'}</div>
+                              <div>Quoted: ₹{project.financial?.amountQuoted?.toLocaleString() || 'N/A'}</div>
+                              <div>Received: ₹{project.financial?.amountReceived?.toLocaleString() || 'N/A'}</div>
+                              <div>Invoice: {project.financial?.invoiceDetails || 'N/A'}</div>
+                              <div>Payment Status: {project.financial?.paymentStatus || 'N/A'}</div>
                             </div>
-                          )}
+                          </div>
+
+                          <div className="border-t pt-4">
+                            <p className="text-sm text-muted-foreground font-bold">⚙️ Technical Details</p>
+                            <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                              <div>Stack: {project.technicalDetails?.technologyStack || 'N/A'}</div>
+                              <div>Hosting: {project.technicalDetails?.hostingDetails || 'N/A'}</div>
+                              <div>Domain: {project.technicalDetails?.domainDetails || 'N/A'}</div>
+                              <div>Credentials: {project.technicalDetails?.credentials || 'N/A'}</div>
+                            </div>
+                          </div>
+
+                          <div className="border-t pt-4">
+                            <p className="text-sm text-muted-foreground font-bold">🚀 Deployment Info</p>
+                            <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                              <div>Status: {project.deployment?.deploymentStatus || 'N/A'}</div>
+                              <div>Date: {project.deployment?.deploymentDate ? new Date(project.deployment.deploymentDate).toLocaleDateString() : 'N/A'}</div>
+                              <div>Go Live: {project.deployment?.goLiveConfirmation ? '✅ Yes' : '❌ No'}</div>
+                              <div>Maintenance: {project.deployment?.maintenancePeriod || 'N/A'}</div>
+                              <div className="col-span-2">UAT Notes: {project.deployment?.uatNotes || 'N/A'}</div>
+                            </div>
+                          </div>
+
+                          <div className="border-t pt-4">
+                            <p className="text-sm text-muted-foreground">📋 Final Remarks</p>
+                            <p className="font-medium mt-1">{project.finalRemarks || 'N/A'}</p>
+                          </div>
+
+                          <div className="border-t pt-4">
+                            <p className="text-sm text-muted-foreground">✅ Client Approval</p>
+                            <p className="font-medium mt-1">{project.clientApproval ? '✅ Approved' : '⏳ Pending'}</p>
+                          </div>
+
+                          <div className="border-t pt-4">
+                            <p className="text-sm text-muted-foreground">⭐ Project Rating</p>
+                            <p className="font-medium mt-1">{project.projectRating ? `${project.projectRating}/5 stars` : 'N/A'}</p>
+                          </div>
                         </>
                       )}
                     </CardContent>
