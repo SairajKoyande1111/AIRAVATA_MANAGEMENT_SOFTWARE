@@ -229,8 +229,8 @@ export default function ProjectsPanel() {
         <TabsContent value="form" className="space-y-4">
           <Card>
             <CardHeader className="bg-blue-50">
-              <CardTitle className="text-2xl">Create New Project</CardTitle>
-              <p className="text-sm text-muted-foreground mt-2">Fill in all the project details below. Required fields are marked with *</p>
+              <CardTitle className="text-2xl">{editingProjectId ? '✏️ Edit Project' : '✨ Create New Project'}</CardTitle>
+              <p className="text-sm text-muted-foreground mt-2">{editingProjectId ? 'Update the project details below and save your changes.' : 'Fill in all the project details below. Required fields are marked with *'}</p>
             </CardHeader>
             <CardContent className="pt-8">
               <form onSubmit={handleCreateProject} className="space-y-8">
@@ -251,9 +251,9 @@ export default function ProjectsPanel() {
                     </div>
 
                     <div>
-                      <FieldLabel label="🔐 Client ID (Auto-Generated)" description="Client ID will be automatically assigned (JSSR01, JSSR02, etc.) when you create the project" />
+                      <FieldLabel label="🔐 Client ID (Auto-Generated)" description={editingProjectId ? "Client ID is fixed for this project" : "Client ID will be automatically assigned (JSSR01, JSSR02, etc.) when you create the project"} />
                       <div className="p-3 bg-blue-100 border border-blue-300 rounded text-sm font-medium text-blue-800" data-testid="display-client-id">
-                        ✓ Your Client ID will be generated automatically when you submit the form
+                        {editingProjectId ? '✓ Client ID is fixed and cannot be changed' : '✓ Your Client ID will be generated automatically when you submit the form'}
                       </div>
                     </div>
 
