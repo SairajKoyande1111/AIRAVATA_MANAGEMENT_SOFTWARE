@@ -8,6 +8,7 @@ import RegisterClientPanel from './panels/register-client-panel';
 import ClientsPanel from './panels/clients-panel';
 import LeadsPanel from './panels/leads-panel';
 import ProjectsPanel from './panels/projects-panel';
+import OngoingProjectsPanel from './panels/ongoing-projects-panel';
 import FollowupsPanel from './panels/followups-panel';
 import ReportsPanel from './panels/reports-panel';
 
@@ -45,6 +46,8 @@ export default function CRMDashboard() {
         return <LeadsPanel />;
       case 'projects':
         return <ProjectsPanel />;
+      case 'ongoing-projects':
+        return <OngoingProjectsPanel />;
       case 'followups':
         return <FollowupsPanel />;
       case 'reports':
