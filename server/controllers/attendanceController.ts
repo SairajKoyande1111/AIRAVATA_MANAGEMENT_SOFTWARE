@@ -60,12 +60,6 @@ export const breakStart = async (req: AuthRequest, res: Response) => {
     }
 
     const breakStartTime = new Date();
-    const hour = breakStartTime.getHours();
-    
-    if (hour < 12) {
-      return res.status(400).json({ error: 'Break can only start after 12:00 PM' });
-    }
-
     attendance.breakStart = breakStartTime;
     await attendance.save();
 
