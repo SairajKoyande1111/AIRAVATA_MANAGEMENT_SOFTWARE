@@ -1,32 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { ChevronDown, Plus, Trash2, Edit2 } from 'lucide-react';
+import { ChevronDown, Plus, Trash2, Edit2, Save, X } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-
-interface ProjectTask {
-  _id?: string;
-  taskName: string;
-  assignedTo: string;
-  taskDescription: string;
-  taskPriority: 'Low' | 'Medium' | 'High' | 'Critical';
-  startDate: string;
-  dueDate: string;
-  taskStatus: 'Not Started' | 'In Progress' | 'On Hold' | 'Completed' | 'Cancelled';
-  comments: string;
-}
-
-interface Milestone {
-  _id?: string;
-  milestoneName: string;
-  dueDate: string;
-  status: 'Not Started' | 'In Progress' | 'Completed';
-  notes: string;
-}
 
 interface Project {
   _id: string;
@@ -48,17 +28,20 @@ interface Project {
   stage: string;
   projectLead: any;
   teamMembers: any[];
-  tasks: ProjectTask[];
-  milestones: Milestone[];
+  tasks: any[];
+  milestones: any[];
   meetingNotes: string;
   clientFeedback: string;
   internalNotes: string;
+  followUps?: string[];
   nextActionDate?: string;
+  uploadedFiles?: string[];
   financial?: any;
   technicalDetails?: any;
   deployment?: any;
-  finalRemarks: string;
-  clientApproval: boolean;
+  finalRemarks?: string;
+  clientApproval?: boolean;
+  handoverFiles?: string[];
   projectRating?: number;
 }
 
@@ -66,7 +49,9 @@ export default function ProjectsPanel() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [expandedProject, setExpandedProject] = useState<string | null>(null);
+  const [editingSection, setEditingSection] = useState<{ projectId: string; section: string } | null>(null);
+
   const [formData, setFormData] = useState({
     projectName: '',
     clientId: '',
@@ -145,6 +130,30 @@ export default function ProjectsPanel() {
     }
   };
 
+  const handleUpdateProject = async (projectId: string, updateData: any) => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (response.ok) {
+        toast.success('Project updated successfully');
+        await fetchProjects();
+        setEditingSection(null);
+      } else {
+        const error = await response.json();
+        toast.error(error.error);
+      }
+    } catch (error) {
+      toast.error('Failed to update project');
+    }
+  };
+
   const handleDeleteProject = async (projectId: string) => {
     if (!confirm('Are you sure you want to delete this project?')) return;
 
@@ -160,6 +169,46 @@ export default function ProjectsPanel() {
       }
     } catch (error) {
       toast.error('Failed to delete project');
+    }
+  };
+
+  const handleAddTask = async (projectId: string, task: any) => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/tasks`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(task),
+      });
+
+      if (response.ok) {
+        toast.success('Task added successfully');
+        await fetchProjects();
+      }
+    } catch (error) {
+      toast.error('Failed to add task');
+    }
+  };
+
+  const handleAddMilestone = async (projectId: string, milestone: any) => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/milestones`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(milestone),
+      });
+
+      if (response.ok) {
+        toast.success('Milestone added successfully');
+        await fetchProjects();
+      }
+    } catch (error) {
+      toast.error('Failed to add milestone');
     }
   };
 
@@ -300,7 +349,7 @@ export default function ProjectsPanel() {
         ) : (
           projects.map((project) => (
             <Card key={project._id} data-testid={`card-project-${project._id}`}>
-              <Collapsible defaultOpen={false}>
+              <Collapsible open={expandedProject === project._id} onOpenChange={(open) => setExpandedProject(open ? project._id : null)}>
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -309,8 +358,13 @@ export default function ProjectsPanel() {
                           {project.projectName}
                         </h3>
                         <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">{project.projectId}</span>
+                        <span className={`text-xs px-2 py-1 rounded ${project.projectStatus === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                          {project.projectStatus}
+                        </span>
                       </div>
-                      <p className="text-sm text-muted-foreground">{project.projectType}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {project.projectType} • {project.priorityLevel} Priority
+                      </p>
                     </div>
                     <div className="flex gap-2">
                       <Button
@@ -332,33 +386,47 @@ export default function ProjectsPanel() {
 
                 <CollapsibleContent>
                   <CardContent className="space-y-6 border-t pt-6">
-                    {/* Basic Details */}
-                    <div>
-                      <h4 className="font-semibold mb-3">Basic Details</h4>
+                    {/* 1. Basic Project Details */}
+                    <Section title="Basic Project Details" projectId={project._id} section="basic">
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
-                          <p className="text-muted-foreground">Client</p>
-                          <p className="font-medium" data-testid={`text-client-${project._id}`}>{project.clientId?.companyName || 'N/A'}</p>
+                          <p className="text-muted-foreground">Project ID</p>
+                          <p className="font-medium" data-testid={`text-project-id-${project._id}`}>{project.projectId}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Contact</p>
+                          <p className="text-muted-foreground">Project Name</p>
+                          <p className="font-medium">{project.projectName}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Client</p>
+                          <p className="font-medium">{project.clientId?.companyName || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Contact Person</p>
                           <p className="font-medium">{project.clientContactPerson}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Mobile</p>
+                          <p className="font-medium">{project.clientMobileNumber}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Email</p>
                           <p className="font-medium">{project.clientEmail}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Mobile</p>
-                          <p className="font-medium">{project.clientMobileNumber}</p>
+                          <p className="text-muted-foreground">Type</p>
+                          <p className="font-medium">{project.projectType}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Description</p>
+                          <p className="font-medium">{project.projectDescription || 'N/A'}</p>
                         </div>
                       </div>
-                    </div>
+                    </Section>
 
-                    {/* Timeline */}
-                    <div>
-                      <h4 className="font-semibold mb-3">Timeline</h4>
-                      <div className="grid grid-cols-2 gap-3 text-sm">
+                    {/* 2. Project Timeline */}
+                    <Section title="Project Timeline" projectId={project._id} section="timeline">
+                      <div className="grid grid-cols-2 gap-3 text-sm mb-4">
                         <div>
                           <p className="text-muted-foreground">Start Date</p>
                           <p className="font-medium">{new Date(project.startDate).toLocaleDateString('en-IN')}</p>
@@ -368,79 +436,220 @@ export default function ProjectsPanel() {
                           <p className="font-medium">{new Date(project.expectedEndDate).toLocaleDateString('en-IN')}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Duration</p>
-                          <p className="font-medium">{project.projectDuration} days</p>
+                          <p className="text-muted-foreground">Actual End</p>
+                          <p className="font-medium">{project.actualEndDate ? new Date(project.actualEndDate).toLocaleDateString('en-IN') : 'Not set'}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Stage</p>
-                          <p className="font-medium" data-testid={`text-stage-${project._id}`}>{project.stage}</p>
+                          <p className="text-muted-foreground">Duration</p>
+                          <p className="font-medium">{project.projectDuration || '—'} days</p>
                         </div>
                       </div>
-                    </div>
+                      <div className="mt-4">
+                        <h4 className="font-semibold mb-2">Milestones ({project.milestones?.length || 0})</h4>
+                        {project.milestones?.length > 0 ? (
+                          <div className="space-y-2">
+                            {project.milestones.map((m, idx) => (
+                              <div key={idx} className="p-2 bg-muted rounded text-sm" data-testid={`milestone-${project._id}-${idx}`}>
+                                <p className="font-medium">{m.milestoneName}</p>
+                                <p className="text-xs text-muted-foreground">Due: {new Date(m.dueDate).toLocaleDateString('en-IN')} | {m.status}</p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">No milestones added</p>
+                        )}
+                      </div>
+                    </Section>
 
-                    {/* Status & Priority */}
-                    <div>
-                      <h4 className="font-semibold mb-3">Status & Priority</h4>
+                    {/* 3. Project Status & Priority */}
+                    <Section title="Project Status & Priority" projectId={project._id} section="status">
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
                           <p className="text-muted-foreground">Status</p>
-                          <p className="font-medium" data-testid={`text-status-${project._id}`}>{project.projectStatus}</p>
+                          <p className="font-medium">{project.projectStatus}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Priority</p>
-                          <p className="font-medium" data-testid={`text-priority-${project._id}`}>{project.priorityLevel}</p>
+                          <p className="font-medium">{project.priorityLevel}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Stage</p>
+                          <p className="font-medium">{project.stage}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Progress</p>
+                          <p className="font-medium">{project.progress}%</p>
+                        </div>
+                      </div>
+                      <div className="mt-3">
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${project.progress}%` }} />
+                        </div>
+                      </div>
+                    </Section>
+
+                    {/* 4. Team Assignment */}
+                    <Section title="Team Assignment" projectId={project._id} section="team">
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Project Lead</p>
+                          <p className="font-medium">{project.projectLead?.name || 'Not assigned'}</p>
+                        </div>
+                        {project.teamMembers?.length > 0 && (
+                          <div>
+                            <p className="text-muted-foreground mb-2">Team Members</p>
+                            <div className="space-y-1">
+                              {project.teamMembers.map((m, idx) => (
+                                <div key={idx} className="p-2 bg-muted rounded text-xs">
+                                  <p className="font-medium">{m.userId?.name || 'N/A'} - {m.role}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </Section>
+
+                    {/* 5. Tasks / Subtasks */}
+                    <Section title="Tasks & Subtasks" projectId={project._id} section="tasks">
+                      {project.tasks?.length > 0 ? (
+                        <div className="space-y-2">
+                          {project.tasks.map((t, idx) => (
+                            <div key={idx} className="p-3 bg-muted rounded text-sm" data-testid={`task-${project._id}-${idx}`}>
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <p className="font-medium">{t.taskName}</p>
+                                  <p className="text-xs text-muted-foreground">{t.taskDescription}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Status: {t.taskStatus} | Priority: {t.taskPriority}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">No tasks added</p>
+                      )}
+                    </Section>
+
+                    {/* 6. Communication & Notes */}
+                    <Section title="Communication & Notes" projectId={project._id} section="communication">
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <p className="text-muted-foreground font-semibold">Meeting Notes</p>
+                          <p className="font-medium">{project.meetingNotes || 'None'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground font-semibold">Client Feedback</p>
+                          <p className="font-medium">{project.clientFeedback || 'None'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground font-semibold">Internal Notes</p>
+                          <p className="font-medium">{project.internalNotes || 'None'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground font-semibold">Next Action Date</p>
+                          <p className="font-medium">{project.nextActionDate ? new Date(project.nextActionDate).toLocaleDateString('en-IN') : 'Not set'}</p>
+                        </div>
+                      </div>
+                    </Section>
+
+                    {/* 7. Financial Section */}
+                    <Section title="Financial Section" projectId={project._id} section="financial">
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Estimated Cost</p>
+                          <p className="font-medium">₹{project.financial?.estimatedCost || '0'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Amount Quoted</p>
+                          <p className="font-medium">₹{project.financial?.amountQuoted || '0'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Amount Received</p>
+                          <p className="font-medium">₹{project.financial?.amountReceived || '0'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Payment Status</p>
+                          <p className="font-medium">{project.financial?.paymentStatus || 'Pending'}</p>
                         </div>
                         <div className="col-span-2">
-                          <p className="text-muted-foreground mb-1">Progress</p>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className="bg-blue-600 h-2 rounded-full"
-                              style={{ width: `${project.progress}%` }}
-                              data-testid={`progress-bar-${project._id}`}
-                            />
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">{project.progress}%</p>
+                          <p className="text-muted-foreground">Invoice Details</p>
+                          <p className="font-medium">{project.financial?.invoiceDetails || 'None'}</p>
                         </div>
                       </div>
-                    </div>
+                    </Section>
 
-                    {/* Description */}
-                    {project.projectDescription && (
-                      <div>
-                        <h4 className="font-semibold mb-2">Description</h4>
-                        <p className="text-sm text-muted-foreground">{project.projectDescription}</p>
-                      </div>
-                    )}
-
-                    {/* Tasks */}
-                    {project.tasks && project.tasks.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold mb-3">Tasks ({project.tasks.length})</h4>
-                        <div className="space-y-2">
-                          {project.tasks.map((task, idx) => (
-                            <div key={idx} className="p-3 bg-muted rounded text-sm" data-testid={`task-${project._id}-${idx}`}>
-                              <p className="font-medium">{task.taskName}</p>
-                              <p className="text-xs text-muted-foreground">Status: {task.taskStatus} | Priority: {task.taskPriority}</p>
-                            </div>
-                          ))}
+                    {/* 8. Technical Details */}
+                    <Section title="Technical Details" projectId={project._id} section="technical">
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Technology Stack</p>
+                          <p className="font-medium">{project.technicalDetails?.technologyStack?.join(', ') || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Hosting</p>
+                          <p className="font-medium">{project.technicalDetails?.hostingDetails || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Domain</p>
+                          <p className="font-medium">{project.technicalDetails?.domainDetails || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Credentials</p>
+                          <p className="font-medium">{project.technicalDetails?.credentials ? '✓ Stored' : 'None'}</p>
                         </div>
                       </div>
-                    )}
+                    </Section>
 
-                    {/* Milestones */}
-                    {project.milestones && project.milestones.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold mb-3">Milestones ({project.milestones.length})</h4>
-                        <div className="space-y-2">
-                          {project.milestones.map((milestone, idx) => (
-                            <div key={idx} className="p-3 bg-muted rounded text-sm" data-testid={`milestone-${project._id}-${idx}`}>
-                              <p className="font-medium">{milestone.milestoneName}</p>
-                              <p className="text-xs text-muted-foreground">Due: {new Date(milestone.dueDate).toLocaleDateString('en-IN')} | Status: {milestone.status}</p>
-                            </div>
-                          ))}
+                    {/* 9. Deployment / Delivery */}
+                    <Section title="Deployment & Delivery" projectId={project._id} section="deployment">
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Status</p>
+                          <p className="font-medium">{project.deployment?.deploymentStatus || 'Not Started'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Date</p>
+                          <p className="font-medium">{project.deployment?.deploymentDate ? new Date(project.deployment.deploymentDate).toLocaleDateString('en-IN') : 'Not set'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Go-Live</p>
+                          <p className="font-medium">{project.deployment?.goLiveConfirmation ? '✓ Confirmed' : 'Pending'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Maintenance</p>
+                          <p className="font-medium">{project.deployment?.maintenancePeriod || 'Not specified'}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-muted-foreground">UAT Notes</p>
+                          <p className="font-medium">{project.deployment?.uatNotes || 'None'}</p>
                         </div>
                       </div>
-                    )}
+                    </Section>
+
+                    {/* 10. Completion Summary */}
+                    <Section title="Completion Summary" projectId={project._id} section="completion">
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Final Remarks</p>
+                          <p className="font-medium">{project.finalRemarks || 'None'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Client Approval</p>
+                          <p className="font-medium">{project.clientApproval ? '✓ Approved' : 'Pending'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Project Rating</p>
+                          <p className="font-medium">{project.projectRating ? `${project.projectRating}/5` : 'Not rated'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Handover Files</p>
+                          <p className="font-medium">{project.handoverFiles?.length || 0} file(s)</p>
+                        </div>
+                      </div>
+                    </Section>
                   </CardContent>
                 </CollapsibleContent>
               </Collapsible>
@@ -449,5 +658,26 @@ export default function ProjectsPanel() {
         )}
       </div>
     </div>
+  );
+}
+
+function Section({ title, projectId, section, children }: { title: string; projectId: string; section: string; children: React.ReactNode }) {
+  return (
+    <Collapsible defaultOpen>
+      <div className="flex justify-between items-center">
+        <CollapsibleTrigger asChild>
+          <button className="flex items-center gap-2 hover:opacity-70">
+            <h4 className="font-semibold">{title}</h4>
+            <ChevronDown className="w-4 h-4" />
+          </button>
+        </CollapsibleTrigger>
+        <Button size="sm" variant="ghost" data-testid={`button-edit-${section}-${projectId}`}>
+          <Edit2 className="w-4 h-4" />
+        </Button>
+      </div>
+      <CollapsibleContent className="mt-3">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
