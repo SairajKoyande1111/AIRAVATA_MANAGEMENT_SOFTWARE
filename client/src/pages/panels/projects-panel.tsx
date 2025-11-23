@@ -187,7 +187,23 @@ export default function ProjectsPanel() {
   };
 
   const handleEditProject = (project: Project) => {
-    setFormData(JSON.parse(JSON.stringify(project)));
+    const fullFormData = {
+      ...DEFAULT_FORM,
+      ...JSON.parse(JSON.stringify(project)),
+      financial: {
+        ...DEFAULT_FORM.financial,
+        ...(project.financial || {}),
+      },
+      technicalDetails: {
+        ...DEFAULT_FORM.technicalDetails,
+        ...(project.technicalDetails || {}),
+      },
+      deployment: {
+        ...DEFAULT_FORM.deployment,
+        ...(project.deployment || {}),
+      },
+    };
+    setFormData(fullFormData);
     setEditingProjectId(project._id);
     setActiveTab('form');
     setExpandedProject(null);
