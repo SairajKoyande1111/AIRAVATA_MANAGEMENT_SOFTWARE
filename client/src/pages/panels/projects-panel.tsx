@@ -625,8 +625,7 @@ export default function ProjectsPanel() {
                           <h3 className="text-xl font-bold" data-testid={`text-project-name-${project._id}`}>
                             {project.projectName}
                           </h3>
-                          <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded" data-testid={`text-project-id-${project._id}`}>{project.projectId}</span>
-                          <span className="text-xs bg-green-500 text-white px-2 py-1 rounded">{project.clientId}</span>
+                          <span className="text-xs bg-green-500 text-white px-2 py-1 rounded font-bold" data-testid={`text-client-id-${project._id}`}>{project.clientId}</span>
                         </div>
                         <p className="text-sm text-muted-foreground">Services: {project.services?.join(', ')}</p>
                       </div>
