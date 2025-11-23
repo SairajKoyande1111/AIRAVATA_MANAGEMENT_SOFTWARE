@@ -30,8 +30,8 @@ export const createProject = async (req: AuthRequest, res: Response) => {
       teamMembers,
     } = req.body;
 
-    if (!projectName || !clientContactPerson || !clientMobileNumber || !clientEmail || !services || !startDate || !expectedEndDate) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!projectName || !services) {
+      return res.status(400).json({ error: 'Project name and at least one service are required' });
     }
 
     const clientId = await generateClientId();

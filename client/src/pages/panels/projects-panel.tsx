@@ -246,7 +246,6 @@ export default function ProjectsPanel() {
                         placeholder="e.g., Mobile App Development"
                         value={formData.projectName}
                         onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-                        required
                         data-testid="input-project-name"
                       />
                     </div>
@@ -265,7 +264,6 @@ export default function ProjectsPanel() {
                           placeholder="e.g., John Smith"
                           value={formData.clientContactPerson}
                           onChange={(e) => setFormData({ ...formData, clientContactPerson: e.target.value })}
-                          required
                           data-testid="input-contact-person"
                         />
                       </div>
@@ -275,7 +273,6 @@ export default function ProjectsPanel() {
                           placeholder="e.g., +91 98765 43210"
                           value={formData.clientMobileNumber}
                           onChange={(e) => setFormData({ ...formData, clientMobileNumber: e.target.value })}
-                          required
                           data-testid="input-mobile"
                         />
                       </div>
@@ -288,7 +285,6 @@ export default function ProjectsPanel() {
                         type="email"
                         value={formData.clientEmail}
                         onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
-                        required
                         data-testid="input-email"
                       />
                     </div>
@@ -300,12 +296,12 @@ export default function ProjectsPanel() {
                           <label key={service} className="flex items-center gap-2 cursor-pointer">
                             <input
                               type="checkbox"
-                              checked={formData.services.includes(service)}
+                              checked={formData.services?.includes(service) || false}
                               onChange={(e) => {
                                 if (e.target.checked) {
-                                  setFormData({ ...formData, services: [...formData.services, service] });
+                                  setFormData({ ...formData, services: [...(formData.services || []), service] });
                                 } else {
-                                  setFormData({ ...formData, services: formData.services.filter(s => s !== service) });
+                                  setFormData({ ...formData, services: (formData.services || []).filter(s => s !== service) });
                                 }
                               }}
                               className="w-4 h-4"
@@ -315,8 +311,8 @@ export default function ProjectsPanel() {
                           </label>
                         ))}
                       </div>
-                      {formData.services.length === 0 && <p className="text-xs text-red-500 mt-1">⚠️ Please select at least one service</p>}
-                      {formData.services.length > 0 && <p className="text-xs text-green-600 mt-1">✓ Selected: {formData.services.join(', ')}</p>}
+                      {(!formData.services || formData.services.length === 0) && <p className="text-xs text-red-500 mt-1">⚠️ Please select at least one service</p>}
+                      {formData.services && formData.services.length > 0 && <p className="text-xs text-green-600 mt-1">✓ Selected: {formData.services.join(', ')}</p>}
                     </div>
 
                     <div>
@@ -341,11 +337,11 @@ export default function ProjectsPanel() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <FieldLabel label="Start Date" description="When does the project officially begin?" />
-                        <Input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} required data-testid="input-start-date" />
+                        <Input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} data-testid="input-start-date" />
                       </div>
                       <div>
                         <FieldLabel label="Expected End Date" description="When do you expect to complete the project?" />
-                        <Input type="date" value={formData.expectedEndDate} onChange={(e) => setFormData({ ...formData, expectedEndDate: e.target.value })} required data-testid="input-end-date" />
+                        <Input type="date" value={formData.expectedEndDate} onChange={(e) => setFormData({ ...formData, expectedEndDate: e.target.value })} data-testid="input-end-date" />
                       </div>
                     </div>
 
