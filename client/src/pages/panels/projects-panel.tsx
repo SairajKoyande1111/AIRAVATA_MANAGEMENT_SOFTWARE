@@ -104,8 +104,8 @@ export default function ProjectsPanel() {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState(DEFAULT_FORM);
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
-  const [editingProject, setEditingProject] = useState<string | null>(null);
-  const [editFormData, setEditFormData] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState('form');
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
 
   const token = localStorage.getItem('token');
 
@@ -134,8 +134,11 @@ export default function ProjectsPanel() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/projects', {
-        method: 'POST',
+      const method = editingProjectId ? 'PUT' : 'POST';
+      const url = editingProjectId ? `/api/projects/${editingProjectId}` : '/api/projects';
+
+      const response = await fetch(url, {
+        method,
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -145,15 +148,21 @@ export default function ProjectsPanel() {
 
       if (response.ok) {
         const data = await response.json();
-        toast.success(`✅ Project created successfully with Client ID: ${data.clientId}`);
+        if (editingProjectId) {
+          toast.success('✅ Project updated successfully');
+        } else {
+          toast.success(`✅ Project created successfully with Client ID: ${data.clientId}`);
+        }
         setFormData(DEFAULT_FORM);
+        setEditingProjectId(null);
+        setActiveTab('list');
         await fetchProjects();
       } else {
         const error = await response.json();
         toast.error(error.error);
       }
     } catch (error) {
-      toast.error('Failed to create project');
+      toast.error('Failed to save project');
     } finally {
       setLoading(false);
     }
@@ -170,7 +179,6 @@ export default function ProjectsPanel() {
 
       if (response.ok) {
         toast.success('✅ Project deleted successfully');
-        setEditingProject(null);
         await fetchProjects();
       }
     } catch (error) {
@@ -179,32 +187,15 @@ export default function ProjectsPanel() {
   };
 
   const handleEditProject = (project: Project) => {
-    setEditingProject(project._id);
-    setEditFormData(JSON.parse(JSON.stringify(project)));
+    setFormData(JSON.parse(JSON.stringify(project)));
+    setEditingProjectId(project._id);
+    setActiveTab('form');
+    setExpandedProject(null);
   };
 
-  const handleSaveProject = async (projectId: string) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editFormData),
-      });
-
-      if (response.ok) {
-        toast.success('✅ Project updated successfully');
-        setEditingProject(null);
-        await fetchProjects();
-      } else {
-        const error = await response.json();
-        toast.error(error.error || 'Failed to update project');
-      }
-    } catch (error) {
-      toast.error('Failed to update project');
-    }
+  const handleCancelEdit = () => {
+    setFormData(DEFAULT_FORM);
+    setEditingProjectId(null);
   };
 
   if (loading) {
@@ -213,9 +204,9 @@ export default function ProjectsPanel() {
 
   return (
     <div className="p-8 space-y-6">
-      <Tabs defaultValue="form" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>
-          <TabsTrigger value="form">📝 Create Project</TabsTrigger>
+          <TabsTrigger value="form">📝 {editingProjectId ? '✏️ Edit Project' : 'Create Project'}</TabsTrigger>
           <TabsTrigger value="list">📋 Project List ({projects.length})</TabsTrigger>
         </TabsList>
 
@@ -599,9 +590,16 @@ export default function ProjectsPanel() {
                   </div>
                 </div>
 
-                <Button type="submit" disabled={loading} className="w-full py-6 text-lg font-bold" data-testid="button-submit-project">
-                  ✨ Create Project
-                </Button>
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={loading} className="flex-1 py-6 text-lg font-bold" data-testid="button-submit-project">
+                    {editingProjectId ? '💾 Update Project' : '✨ Create Project'}
+                  </Button>
+                  {editingProjectId && (
+                    <Button type="button" variant="outline" onClick={handleCancelEdit} className="flex-1 py-6 text-lg font-bold" data-testid="button-cancel-edit">
+                      ✕ Cancel Edit
+                    </Button>
+                  )}
+                </div>
               </form>
             </CardContent>
           </Card>
@@ -616,7 +614,7 @@ export default function ProjectsPanel() {
             </Card>
           ) : (
             projects.map((project) => (
-              <Card key={project._id} data-testid={`card-project-${project._id}`} className={editingProject === project._id ? 'border-blue-500 border-2' : ''}>
+              <Card key={project._id} data-testid={`card-project-${project._id}`}>
                 <Collapsible open={expandedProject === project._id} onOpenChange={(open) => setExpandedProject(open ? project._id : null)}>
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
@@ -630,98 +628,25 @@ export default function ProjectsPanel() {
                         <p className="text-sm text-muted-foreground">Services: {project.services?.join(', ')}</p>
                       </div>
                       <div className="flex gap-2">
-                        {editingProject === project._id ? (
-                          <>
-                            <Button size="sm" variant="default" onClick={() => handleSaveProject(project._id)} className="bg-green-600 hover:bg-green-700" data-testid={`button-save-project-${project._id}`}>
-                              💾 Save
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => setEditingProject(null)} data-testid={`button-cancel-project-${project._id}`}>
-                              ✕ Cancel
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button size="sm" variant="outline" onClick={() => handleEditProject(project)} data-testid={`button-edit-project-${project._id}`}>
-                              ✏️ Edit
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleDeleteProject(project._id)} data-testid={`button-delete-project-${project._id}`}>
-                              🗑️ Delete
-                            </Button>
-                            <CollapsibleTrigger asChild>
-                              <Button size="sm" variant="outline">
-                                <ChevronDown className="w-4 h-4" />
-                              </Button>
-                            </CollapsibleTrigger>
-                          </>
-                        )}
+                        <Button size="sm" variant="outline" onClick={() => handleEditProject(project)} data-testid={`button-edit-project-${project._id}`}>
+                          ✏️ Edit
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleDeleteProject(project._id)} data-testid={`button-delete-project-${project._id}`}>
+                          🗑️ Delete
+                        </Button>
+                        <CollapsibleTrigger asChild>
+                          <Button size="sm" variant="outline">
+                            <ChevronDown className="w-4 h-4" />
+                          </Button>
+                        </CollapsibleTrigger>
                       </div>
                     </div>
                   </CardHeader>
 
                   <CollapsibleContent>
                     <CardContent className="space-y-6 border-t pt-6">
-                      {editingProject === project._id && editFormData ? (
-                        <form className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-sm font-medium">Project Name</label>
-                              <Input value={editFormData.projectName} onChange={(e) => setEditFormData({ ...editFormData, projectName: e.target.value })} />
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium">Contact Person</label>
-                              <Input value={editFormData.clientContactPerson} onChange={(e) => setEditFormData({ ...editFormData, clientContactPerson: e.target.value })} />
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium">Mobile</label>
-                              <Input value={editFormData.clientMobileNumber} onChange={(e) => setEditFormData({ ...editFormData, clientMobileNumber: e.target.value })} />
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium">Email</label>
-                              <Input type="email" value={editFormData.clientEmail} onChange={(e) => setEditFormData({ ...editFormData, clientEmail: e.target.value })} />
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-sm font-medium">Status</label>
-                              <Select value={editFormData.projectStatus} onValueChange={(val) => setEditFormData({ ...editFormData, projectStatus: val })}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Not Started">Not Started</SelectItem>
-                                  <SelectItem value="In Progress">In Progress</SelectItem>
-                                  <SelectItem value="On Hold">On Hold</SelectItem>
-                                  <SelectItem value="Completed">Completed</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium">Priority</label>
-                              <Select value={editFormData.priorityLevel} onValueChange={(val) => setEditFormData({ ...editFormData, priorityLevel: val })}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Low">Low</SelectItem>
-                                  <SelectItem value="Medium">Medium</SelectItem>
-                                  <SelectItem value="High">High</SelectItem>
-                                  <SelectItem value="Critical">Critical</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium">Progress (%)</label>
-                            <Input type="number" min="0" max="100" value={editFormData.progress} onChange={(e) => setEditFormData({ ...editFormData, progress: parseInt(e.target.value) || 0 })} />
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium">Description</label>
-                            <Textarea value={editFormData.projectDescription} onChange={(e) => setEditFormData({ ...editFormData, projectDescription: e.target.value })} className="min-h-20" />
-                          </div>
-                        </form>
-                      ) : (
-                        <>
-                          <div className="grid grid-cols-2 gap-6">
+                      <>
+                        <div className="grid grid-cols-2 gap-6">
                             <div>
                               <p className="text-sm text-muted-foreground">📌 Project Name</p>
                               <p className="font-medium">{project.projectName}</p>
@@ -864,7 +789,7 @@ export default function ProjectsPanel() {
                             <p className="font-medium mt-1">{project.projectRating ? `${project.projectRating}/5 stars` : 'N/A'}</p>
                           </div>
                         </>
-                      )}
+                      
                     </CardContent>
                   </CollapsibleContent>
                 </Collapsible>
