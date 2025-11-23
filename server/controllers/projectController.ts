@@ -21,7 +21,6 @@ export const createProject = async (req: AuthRequest, res: Response) => {
       clientMobileNumber,
       clientEmail,
       services,
-      projectType,
       projectDescription,
       startDate,
       expectedEndDate,
@@ -31,7 +30,7 @@ export const createProject = async (req: AuthRequest, res: Response) => {
       teamMembers,
     } = req.body;
 
-    if (!projectName || !clientContactPerson || !clientMobileNumber || !clientEmail || !services || !projectType || !startDate || !expectedEndDate) {
+    if (!projectName || !clientContactPerson || !clientMobileNumber || !clientEmail || !services || !startDate || !expectedEndDate) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -49,7 +48,6 @@ export const createProject = async (req: AuthRequest, res: Response) => {
       clientMobileNumber,
       clientEmail,
       services: Array.isArray(services) ? services : [services],
-      projectType,
       projectDescription,
       startDate,
       expectedEndDate,

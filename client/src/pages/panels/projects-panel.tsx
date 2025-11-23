@@ -53,7 +53,6 @@ const DEFAULT_FORM = {
   clientMobileNumber: '',
   clientEmail: '',
   services: [] as string[],
-  projectType: '',
   projectDescription: '',
   startDate: '',
   expectedEndDate: '',
@@ -279,17 +278,6 @@ export default function ProjectsPanel() {
                       </div>
                       {formData.services.length === 0 && <p className="text-xs text-red-500 mt-1">⚠️ Please select at least one service</p>}
                       {formData.services.length > 0 && <p className="text-xs text-green-600 mt-1">✓ Selected: {formData.services.join(', ')}</p>}
-                    </div>
-
-                    <div>
-                      <FieldLabel label="Project Type / Category *" description="What kind of project is this? (e.g., Website, Mobile App, Software, Marketing, etc.)" />
-                      <Input
-                        placeholder="e.g., Custom Software Development"
-                        value={formData.projectType}
-                        onChange={(e) => setFormData({ ...formData, projectType: e.target.value })}
-                        required
-                        data-testid="input-project-type"
-                      />
                     </div>
 
                     <div>

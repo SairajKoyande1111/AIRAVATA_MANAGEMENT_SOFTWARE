@@ -55,7 +55,6 @@ export interface IProject extends Document {
   clientMobileNumber: string;
   clientEmail: string;
   services: string[];
-  projectType: string;
   projectDescription: string;
   startDate: Date;
   expectedEndDate: Date;
@@ -248,10 +247,6 @@ const ProjectSchema = new Schema<IProject>(
     services: {
       type: [String],
       enum: ['Website Development', 'Mobile App Development', 'Custom Software Development', 'Digital Marketing'],
-      required: true,
-    },
-    projectType: {
-      type: String,
       required: true,
     },
     projectDescription: {
