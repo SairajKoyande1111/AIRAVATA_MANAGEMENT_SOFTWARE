@@ -11,6 +11,7 @@ import * as taskController from "./controllers/taskController";
 import * as taskArchiveController from "./controllers/taskArchiveController";
 import * as userController from "./controllers/userController";
 import * as projectController from "./controllers/projectController";
+import * as ongoingProjectController from "./controllers/ongoingProjectController";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes (public)
@@ -73,6 +74,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/projects/:id/tasks/:taskId", authenticateToken, projectController.updateTask);
   app.delete("/api/projects/:id/tasks/:taskId", authenticateToken, projectController.deleteTask);
   app.post("/api/projects/:id/milestones", authenticateToken, projectController.addMilestone);
+
+  // Ongoing Project routes (protected)
+  app.post("/api/ongoing-projects", authenticateToken, ongoingProjectController.createOngoingProject);
+  app.get("/api/ongoing-projects", authenticateToken, ongoingProjectController.getOngoingProjects);
+  app.put("/api/ongoing-projects/:id", authenticateToken, ongoingProjectController.updateOngoingProject);
+  app.delete("/api/ongoing-projects/:id", authenticateToken, ongoingProjectController.deleteOngoingProject);
+  app.get("/api/ongoing-projects/team-members", authenticateToken, ongoingProjectController.getTeamMembers);
+  app.get("/api/ongoing-projects/available-projects", authenticateToken, ongoingProjectController.getAvailableProjects);
 
   const httpServer = createServer(app);
 
