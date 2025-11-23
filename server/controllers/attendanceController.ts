@@ -30,11 +30,6 @@ export const clockIn = async (req: AuthRequest, res: Response) => {
     }
 
     const clockInTime = new Date();
-    const hour = clockInTime.getHours();
-    
-    if (hour < 10) {
-      return res.status(400).json({ error: 'Cannot clock in before 10:00 AM' });
-    }
 
     const attendance = existingAttendance || new Attendance({ userId, date: today });
     attendance.clockIn = clockInTime;
