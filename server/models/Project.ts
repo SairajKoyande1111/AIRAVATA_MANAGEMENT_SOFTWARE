@@ -49,11 +49,12 @@ export interface IDeployment extends Document {
 
 export interface IProject extends Document {
   projectId: string;
+  clientId: string;
   projectName: string;
-  clientId: mongoose.Types.ObjectId;
   clientContactPerson: string;
   clientMobileNumber: string;
   clientEmail: string;
+  services: string[];
   projectType: string;
   projectDescription: string;
   startDate: Date;
@@ -230,6 +231,7 @@ const ProjectSchema = new Schema<IProject>(
     clientId: {
       type: String,
       required: true,
+      unique: true,
     },
     clientContactPerson: {
       type: String,
@@ -241,6 +243,11 @@ const ProjectSchema = new Schema<IProject>(
     },
     clientEmail: {
       type: String,
+      required: true,
+    },
+    services: {
+      type: [String],
+      enum: ['Website Development', 'Mobile App Development', 'Custom Software Development', 'Digital Marketing'],
       required: true,
     },
     projectType: {

@@ -2,6 +2,12 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import Project from '../models/Project';
 
+const generateClientId = async (): Promise<string> => {
+  const count = await Project.countDocuments();
+  const nextNumber = count + 1;
+  return `JSSR${String(nextNumber).padStart(2, '0')}`;
+};
+
 const generateProjectId = async (): Promise<string> => {
   const count = await Project.countDocuments();
   return `PROJ-${Date.now()}-${count + 1}`;
@@ -11,10 +17,10 @@ export const createProject = async (req: AuthRequest, res: Response) => {
   try {
     const {
       projectName,
-      clientId,
       clientContactPerson,
       clientMobileNumber,
       clientEmail,
+      services,
       projectType,
       projectDescription,
       startDate,
@@ -25,10 +31,11 @@ export const createProject = async (req: AuthRequest, res: Response) => {
       teamMembers,
     } = req.body;
 
-    if (!projectName || !clientId || !clientContactPerson || !clientMobileNumber || !clientEmail || !projectType || !startDate || !expectedEndDate) {
+    if (!projectName || !clientContactPerson || !clientMobileNumber || !clientEmail || !services || !projectType || !startDate || !expectedEndDate) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    const clientId = await generateClientId();
     const projectId = await generateProjectId();
     const start = new Date(startDate);
     const end = new Date(expectedEndDate);
@@ -41,6 +48,7 @@ export const createProject = async (req: AuthRequest, res: Response) => {
       clientContactPerson,
       clientMobileNumber,
       clientEmail,
+      services: Array.isArray(services) ? services : [services],
       projectType,
       projectDescription,
       startDate,
@@ -59,6 +67,7 @@ export const createProject = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json({
       message: 'Project created successfully',
+      clientId,
       project,
     });
   } catch (error) {

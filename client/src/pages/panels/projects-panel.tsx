@@ -13,10 +13,11 @@ interface Project {
   _id: string;
   projectId: string;
   projectName: string;
-  clientId: any;
+  clientId: string;
   clientContactPerson: string;
   clientMobileNumber: string;
   clientEmail: string;
+  services: string[];
   projectType: string;
   projectDescription: string;
   startDate: string;
@@ -48,10 +49,10 @@ interface Project {
 
 const DEFAULT_FORM = {
   projectName: 'E-commerce Website for Tech Store',
-  clientId: 'CLT001',
   clientContactPerson: 'Rajesh Kumar',
   clientMobileNumber: '+91 98765 43210',
   clientEmail: 'rajesh@techstore.com',
+  services: ['Website Development', 'Digital Marketing'],
   projectType: 'Custom Software Development',
   projectDescription: 'Full-stack e-commerce platform with product catalog, shopping cart, payment gateway integration, and admin dashboard for managing inventory and orders.',
   startDate: '2024-11-20',
@@ -104,6 +105,7 @@ export default function ProjectsPanel() {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState(DEFAULT_FORM);
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
+  const [generatedClientId, setGeneratedClientId] = useState<string>('');
 
   const token = localStorage.getItem('token');
 
@@ -142,8 +144,10 @@ export default function ProjectsPanel() {
       });
 
       if (response.ok) {
-        toast.success('Project created successfully');
+        const data = await response.json();
+        toast.success(`Project created successfully with Client ID: ${data.clientId}`);
         setFormData(DEFAULT_FORM);
+        setGeneratedClientId('');
         await fetchProjects();
       } else {
         const error = await response.json();
